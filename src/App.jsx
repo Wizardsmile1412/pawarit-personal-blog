@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import './assets/Global.css'
-import {HeroSection, Navbar, ArticleSection, Footer} from './components/PageContainer'
+import {HeroSection, Navbar, Footer} from './components/PageContainer'
+import ArticleSection from './components/ArticleSection'
 
 function App() {
   const [count, setCount] = useState(0)

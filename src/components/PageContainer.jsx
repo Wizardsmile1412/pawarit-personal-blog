@@ -1,7 +1,5 @@
 import React from 'react';
 import { useState } from 'react';
-import { IoSearch } from "react-icons/io5";
-import { Input } from "@/components/ui/input"
 import '@/assets/Global.css';
 import coffeeHero from '@/assets/coffeeHero.jpg'
 import logo from '../assets/logo.png'
@@ -67,13 +65,13 @@ export function Navbar() {
 
 export function HeroSection() {
   return (
-    <section className="w-full flex flex-col items-center justify-center my-7 sm:flex-row sm:justify-between sm:px-20">
+    <section className="w-full flex flex-col items-center justify-center px-7 my-7 sm:flex-row sm:justify-between sm:px-20">
       {/* 1.1) Quote Block */}
-      <div className="flex flex-col justify-center text-center sm:text-left p-12 sm:w-[40%] w-full">
+      <div className="flex flex-col justify-center text-center sm:text-left sm:w-[40%] w-full">
         <h1 className="text-4xl font-bold">
         Coffee is more than a drink; it's a journey, a ritual, and a story in every cup.
         </h1>
-        <p className="text-gray-600 mt-8">
+        <p className="text-gray-600 my-8">
           Embark on a journey through the world of coffee. Explore rich flavors, brewing secrets, and stories that awaken your senses every day.
         </p>
       </div>
@@ -90,75 +88,19 @@ export function HeroSection() {
   );
 }
 
-
-const categories = ["Highlight", "Coffee", "Inspiration", "General"];
-export function ArticleSection() {
-  const [selectedCategory, setSelectedCategory] = useState("Highlight");
-  const [search, setSearch] = useState("");
-
-  return (
-    <div className="p-6">
-      <h2 className="text-xl font-bold text-gray-900 mb-4">Latest articles</h2>
-
-      {/* Responsive Container */}
-      <div className="bg-gray-100 rounded-lg p-4 flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:justify-between sm:items-center">
-        
-        {/* Categories - Buttons on Desktop, Dropdown on Mobile */}
-        <div className="w-full sm:w-auto">
-          <label className="text-gray-500 block sm:hidden">Category</label>
-          
-          {/* Buttons for Desktop */}
-          <div className="hidden sm:flex space-x-4">
-            {categories.map((category) => (
-              <button
-              key={category}
-              className="px-4 py-2 rounded-lg text-gray-500 hover:bg-gray-300 hover:text-gray-900 transition"
-              onClick={() => setSelectedCategory(category)}
-            >
-              {category}
-            </button>            
-            ))}
-          </div>
-
-          {/* Dropdown for Mobile */}
-          <select
-            className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:outline-none bg-white sm:hidden"
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-          >
-            {categories.map((category) => (
-              <option key={category} value={category}>
-                {category}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        {/* Search Bar (Always on the Right) */}
-        <div className="relative w-full sm:w-1/3">
-          <Input type="text" placeholder="Search"
-          className="w-full px-4 py-2 rounded-lg bg-white border border-gray-300 !focus:outline-none !focus:ring-0 !focus:border-transparent"/>
-          <IoSearch className="absolute right-3 top-3 text-gray-400" />
-        </div>
-        
-      </div>
-    </div>
-  );
-}
-
 export function Footer(){
   return(
-    <footer className="w-full bg-gray-100 py-6 px-20 flex justify-between items-center">
+    <footer className="w-full h-30 bg-[#EFEEEB] py-6 px-20 flex flex-col justify-around sm:flex-row sm:justify-between sm:items-center text-center">
       {/* Left: Social Media Section */}
-      <div className="flex items-center gap-4">
-        <span className="text-gray-800 font-medium">Get in touch</span>
-        <FaLinkedin className="text-gray-800 text-xl cursor-pointer hover:text-gray-600" />
-        <FaGithub className="text-gray-800 text-xl cursor-pointer hover:text-gray-600" />
-        <FaGoogle className="text-gray-800 text-xl cursor-pointer hover:text-gray-600" />
+      <div className="flex items-center gap-4 justify-center">
+        <span className="text-[#43403B] font-medium">Get in touch</span>
+        <FaLinkedin className="text-[#43403B] text-xl cursor-pointer hover:text-gray-600" />
+        <FaGithub className="text-[#43403B] text-xl cursor-pointer hover:text-gray-600" />
+        <FaGoogle className="text-[#43403B] text-xl cursor-pointer hover:text-gray-600" />
       </div>
 
       {/* Right: Home Page Link */}
-      <a href="/" className="text-gray-800 font-medium underline underline-offset-2 hover:text-gray-600">
+      <a href="/" className="text-[#43403B] font-medium hover:underline hover:underline-offset-2 hover:text-[#26231E]">
         Home page
       </a>
     </footer>
