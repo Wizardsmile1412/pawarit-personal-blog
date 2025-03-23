@@ -38,10 +38,8 @@ import {
           </div>
         </div>
       </div>
-
     );
    }
-   
 
 const categories = ["Highlight", "Coffee", "Inspiration", "General"];
 function ArticleSection() {
@@ -88,10 +86,9 @@ function ArticleSection() {
             </SelectTrigger>
             <SelectContent>
                 <SelectGroup>
-                <SelectLabel>Highlight</SelectLabel>
-                <SelectItem value="Coffee">Coffee</SelectItem>
-                <SelectItem value="Inspiration">Inspiration</SelectItem>
-                <SelectItem value="General">General</SelectItem>
+                {categories.map((category)=>
+                <SelectItem key={category} value={category}>{category}</SelectItem>
+                )}
                 </SelectGroup>
             </SelectContent>
         </Select>
