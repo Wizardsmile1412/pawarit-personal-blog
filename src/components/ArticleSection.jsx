@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { IoSearch } from "react-icons/io5";
 import { Input } from "@/components/ui/input";
 import {
@@ -6,66 +6,71 @@ import {
   SelectContent,
   SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { blogPosts } from "@/data/blogPosts";
+import axios from "axios";
+import BlogCard from "./BlogCard";
 
-function BlogCard({ post }) {
-  return (
-    <div className="flex flex-col gap-4">
-      <a href="#" className="relative h-[212px] sm:h-[360px]">
-        <img
-          className="w-full h-full object-cover rounded-md"
-          src={post.image}
-          alt={post.title}
-        />
-      </a>
-      <div className="flex flex-col">
-        <div className="flex">
-          <span className="bg-green-200 rounded-full px-3 py-1 text-sm font-semibold text-green-600 mb-2">
-            {post.category}
-          </span>
-        </div>
-        <a href="#">
-          <h2 className="text-start font-bold text-xl mb-2 line-clamp-2 hover:underline">
-            {post.title}
-          </h2>
-        </a>
-        <p className="text-muted-foreground text-sm mb-4 flex-grow line-clamp-3">
-          {post.description}
-        </p>
-        <div className="flex items-center text-sm">
-          <img
-            className="w-8 h-8 rounded-full mr-2"
-            src="https://res.cloudinary.com/dcbpjtd1r/image/upload/v1728449784/my-blog-post/xgfy0xnvyemkklcqodkg.jpg"
-            alt="Tomson P."
-          />
-          <span>{post.author}</span>
-          <span className="mx-2 text-gray-300">|</span>
-          <span>{post.date}</span>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-const categories = ["Highlight", "Coffee", "Inspiration", "General"];
+const categories = ["Highlight", "Cat", "Inspiration", "General"];
 function ArticleSection() {
   const [selectedCategory, setSelectedCategory] = useState("Highlight");
+  const [posts, setPosts] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
+  const [isLoading, setLoading] = useState(false);
 
-  // Filter blog posts by category (if no "Highlight" posts, fallback to any posts)
-  let filteredPosts = blogPosts.filter(
-    (post) => post.category === selectedCategory
-  );
+  async function getArticles(page, category) {
+    setLoading(true);
+    try {
+      const categoryParam = category === "Highlight" ? "" : category;
 
-  // If "Highlight" is selected but has no posts, show first 6 posts instead
-  if (selectedCategory === "Highlight" && filteredPosts.length === 0) {
-    filteredPosts = blogPosts.slice(0, 6);
-  } else {
-    filteredPosts = filteredPosts.slice(0, 6); // Always limit to 6 posts
+      const response = await axios.get(
+        "https://blog-post-project-api.vercel.app/posts",
+        {
+          params: {
+            page: page,
+            limit: 6,
+            category: categoryParam,
+          },
+        }
+      );
+
+      // If it's the first page, replace all posts
+      // Otherwise, append the new posts to the existing ones
+      if (page === 1) {
+        setPosts(response.data.posts);
+      } else {
+        setPosts((prevPosts) => [...prevPosts, ...response.data.posts]);
+      }
+
+      setTotalPages(response.data.totalPages);
+    } catch (error) {
+      console.error(`Fetching error: ${error}`);
+    } finally {
+      setLoading(false);
+    }
   }
+
+  useEffect(() => {
+    // Reset to page 1 whenever category changes
+    setCurrentPage(1);
+    setPosts([]);
+    getArticles(1, selectedCategory);
+  }, [selectedCategory]);
+
+  useEffect(() => {
+    // Only fetch if we're not on page 1 (which is already handled by the category change)
+    if (currentPage > 1) {
+      getArticles(currentPage, selectedCategory);
+    }
+  }, [currentPage]);
+
+  const handleViewMore = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage((prevPage) => prevPage + 1);
+    }
+  };
 
   return (
     <div className="my-20 px-20">
@@ -107,7 +112,11 @@ function ArticleSection() {
         </div>
 
         {/* Dropdown for Mobile */}
-        <Select value={selectedCategory} onValueChange={setSelectedCategory} className="block">
+        <Select
+          value={selectedCategory}
+          onValueChange={setSelectedCategory}
+          className="block"
+        >
           <SelectTrigger className="w-full sm:hidden bg-white text-gray-500">
             <SelectValue placeholder="Highlight" />
           </SelectTrigger>
@@ -125,14 +134,26 @@ function ArticleSection() {
 
       {/* Blog Card */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 px-4 md:px-0">
-        {filteredPosts.length > 0 ? (
-          filteredPosts.map((item) => <BlogCard key={item.id} post={item} />)
-        ) : (
-          <p className="text-gray-500 text-center col-span-2">
+        {posts.length === 0 && !isLoading ? (
+          <p className="text-gray-500 text-center col-span-2 text-2xl">
             No articles found in this category.
           </p>
+        ) : (
+          posts.map((item, index) => <BlogCard key={index} post={item} />)
         )}
       </div>
+
+      {currentPage < totalPages && (
+        <div className="flex flex-row justify-center mt-9 mb-4">
+          <button
+            className="text-2xl h-15 w-40 min-w-40 hover:underline hover:cursor-pointer"
+            onClick={handleViewMore}
+            disabled={isLoading}
+          >
+            {isLoading ? "Loading..." : "View More"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
