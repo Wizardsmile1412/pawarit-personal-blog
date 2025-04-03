@@ -1,0 +1,11 @@
+@import "tailwindcss";
+@plugin "tailwindcss-animate";
+@custom-variant dark (&:is(.dark *));
+
+#root {
+  box-sizing: content-box;
+  padding: 0;
+  margin: 0;
+  background-color: #F9F8F6;
+}
+
