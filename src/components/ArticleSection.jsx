@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { IoSearch } from "react-icons/io5";
 import { Input } from "@/components/ui/input";
 import {
@@ -11,14 +11,26 @@ import {
 } from "@/components/ui/select";
 import axios from "axios";
 import BlogCard from "./BlogCard";
+import { debounce } from "lodash";
+import { useNavigate } from "react-router-dom";
 
 const categories = ["Highlight", "Cat", "Inspiration", "General"];
+
 function ArticleSection() {
   const [selectedCategory, setSelectedCategory] = useState("Highlight");
   const [posts, setPosts] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [isLoading, setLoading] = useState(false);
+
+  // New states for search functionality
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const searchInputRef = useRef(null);
+  const dropdownRef = useRef(null);
+  const navigate = useNavigate();
 
   async function getArticles(page, category) {
     setLoading(true);
@@ -52,6 +64,69 @@ function ArticleSection() {
     }
   }
 
+    //Function to handle clicks outside the dropdown to close it
+    useEffect(() => {
+      function handleClickOutside(event) {
+        if (dropdownRef.current && !dropdownRef.current.contains(event.target) &&
+            searchInputRef.current && !searchInputRef.current.contains(event.target)) {
+          setShowDropdown(false);
+        }
+      }
+      
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }, []);
+  
+   //Search for articles with debounce
+   const searchArticles = useMemo(() => 
+    debounce(async (term) => {
+      const trimmedTerm = term.trim();
+      if (!trimmedTerm) {
+        setSearchResults([]);
+        setIsSearching(false);
+        return;
+      }
+  
+      setIsSearching(true);
+      try {
+        const response = await axios.get(
+          "https://blog-post-project-api.vercel.app/posts",
+          {
+            params: {
+              keyword: trimmedTerm,
+              limit: 10,
+            },
+          }
+        );
+        setSearchResults(response.data.posts || []);
+      } catch (error) {
+        console.error(`Search error: ${error}`);
+        setSearchResults([]);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 300),
+  [],
+  );
+
+    // Handle search input change
+    const handleSearchChange = (e) => {
+      const value = e.target.value;
+      setSearchTerm(value);
+      setShowDropdown(true);
+      searchArticles(value);
+    };
+  
+    // Handle clicking on a search result
+    const handleResultClick = (postId) => {
+      setShowDropdown(false);
+      setSearchTerm("");
+      // Navigate to the post page
+      navigate(`/post/${postId}`);
+    };  
+
   useEffect(() => {
     // Reset to page 1 whenever category changes
     setCurrentPage(1);
@@ -64,7 +139,7 @@ function ArticleSection() {
     if (currentPage > 1) {
       getArticles(currentPage, selectedCategory);
     }
-  }, [currentPage]);
+  }, [currentPage, selectedCategory]);
 
   const handleViewMore = () => {
     if (currentPage < totalPages) {
@@ -101,14 +176,42 @@ function ArticleSection() {
           </div>
         </div>
 
-        {/* Search Bar (Always on the Right) */}
+        {/* Search Bar */}
         <div className="relative w-full sm:w-1/3">
           <Input
+          ref={searchInputRef}
             type="text"
             placeholder="Search"
+            value={searchTerm}
+            onChange={handleSearchChange}
+            onFocus={() => searchTerm && setShowDropdown(true)}
             className="w-full px-4 py-2 rounded-lg bg-white border border-gray-300 !focus:outline-none !focus:ring-0 !focus:border-transparent"
           />
           <IoSearch className="absolute right-3 top-3 text-gray-400" />
+
+          {/* Autocomplete Dropdown */}
+          {showDropdown && (
+            <div 
+              ref={dropdownRef}
+              className="absolute z-10 mt-1 w-full bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-auto"
+            >
+              {isSearching ? (
+                <div className="px-4 py-2 text-gray-500">Searching...</div>
+              ) : searchResults.length > 0 ? (
+                searchResults.map((post) => (
+                  <div
+                    key={post.id}
+                    className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                    onClick={() => handleResultClick(post.id)}
+                  >
+                    {post.title}
+                  </div>
+                ))
+              ) : searchTerm ? (
+                <div className="px-4 py-2 text-gray-500">No results found</div>
+              ) : null}
+            </div>
+          )}
         </div>
 
         {/* Dropdown for Mobile */}
