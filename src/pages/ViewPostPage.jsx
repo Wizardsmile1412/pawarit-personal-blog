@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Heart } from "lucide-react";
-import { toast, Toaster } from "sonner"
+import { toast, Toaster } from "sonner";
 import "../assets/Global.css";
 import { Navbar, Footer } from "../components/PageContainer";
 import AuthorSidebar from "../components/ui/AuthorSidebar";
@@ -84,19 +84,21 @@ function ViewPostPage() {
     try {
       // Get the current page URL
       const currentUrl = window.location.href;
-      
+
       // Copy to clipboard
       await navigator.clipboard.writeText(currentUrl);
-      
+
       // Show success toast
       toast.success(
         <div className="flex flex-col gap-1">
           <p className="font-semibold">Copied!</p>
-          <p className="text-sm">This article has been copied to your clipboard.</p>
+          <p className="text-sm">
+            This article has been copied to your clipboard.
+          </p>
         </div>,
         {
           duration: 2000,
-          style: { backgroundColor: '#10B981', color: 'white' },
+          style: { backgroundColor: "#10B981", color: "white" },
         }
       );
     } catch (error) {
@@ -106,29 +108,29 @@ function ViewPostPage() {
   };
 
   // HandleSocialShare
-const handleSocialShare = (platform) => {
-  const currentUrl = window.location.href;
-  const encodedUrl = encodeURIComponent(currentUrl);
-  
-  let shareUrl;
-  
-  switch (platform) {
-    case 'facebook':
-      shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
-      break;
-    case 'linkedin':
-      shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`;
-      break;
-    case 'twitter':
-      shareUrl = `https://twitter.com/share?url=${encodedUrl}`;
-      break;
-    default:
-      return;
-  }
-  
-  // Open a new window for sharing
-  window.open(shareUrl, '_blank', 'width=600,height=400');
-};
+  const handleSocialShare = (platform) => {
+    const currentUrl = window.location.href;
+    const encodedUrl = encodeURIComponent(currentUrl);
+
+    let shareUrl;
+
+    switch (platform) {
+      case "facebook":
+        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
+        break;
+      case "linkedin":
+        shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`;
+        break;
+      case "twitter":
+        shareUrl = `https://twitter.com/share?url=${encodedUrl}`;
+        break;
+      default:
+        return;
+    }
+
+    // Open a new window for sharing
+    window.open(shareUrl, "_blank", "width=600,height=400");
+  };
 
   const getContents = async (postId) => {
     try {
@@ -142,8 +144,6 @@ const handleSocialShare = (platform) => {
     }
   };
 
-  console.log(postInfo);
-
   useEffect(() => {
     getContents(postId);
   }, [postId]);
@@ -154,7 +154,7 @@ const handleSocialShare = (platform) => {
 
   return (
     <>
-      <Toaster position="bottom-right"/>
+      <Toaster position="bottom-right" />
       <Navbar />
 
       <section className="page-container w-full flex flex-col justify-center items-center px-4 sm:px-7 md:px-20">
@@ -228,25 +228,29 @@ const handleSocialShare = (platform) => {
                   <span>{postInfo.likes}</span>
                 </button>
                 <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
-                  <button 
-                  onClick={handleCopyLink}
-                  className="flex-1 sm:flex-none flex items-center justify-center gap-3 bg-white border border-gray-400 px-7 sm:px-10 py-3 rounded-full">
+                  <button
+                    onClick={handleCopyLink}
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-3 bg-white border border-gray-400 px-7 sm:px-10 py-3 rounded-full"
+                  >
                     <span>Copy link</span>
                   </button>
                   <div className="flex items-center gap-2">
-                    <button 
-                    onClick={() => handleSocialShare('facebook')}
-                    className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center">
+                    <button
+                      onClick={() => handleSocialShare("facebook")}
+                      className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center"
+                    >
                       <span className="text-white font-bold">f</span>
                     </button>
-                    <button 
-                    onClick={() => handleSocialShare('linkedin')}
-                    className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center">
+                    <button
+                      onClick={() => handleSocialShare("linkedin")}
+                      className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center"
+                    >
                       <span className="text-white font-bold">in</span>
                     </button>
-                    <button 
-                    onClick={() => handleSocialShare('twitter')}
-                    className="w-12 h-12 bg-blue-400 rounded-full flex items-center justify-center">
+                    <button
+                      onClick={() => handleSocialShare("twitter")}
+                      className="w-12 h-12 bg-blue-400 rounded-full flex items-center justify-center"
+                    >
                       <span className="text-white font-bold">t</span>
                     </button>
                   </div>
