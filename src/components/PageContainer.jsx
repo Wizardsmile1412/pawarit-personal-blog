@@ -20,15 +20,15 @@ export function Navbar() {
       <nav className="w-full h-[80px] bg-[#F9F8F6] border-b border-[#DAD6D1] flex items-center justify-between px-7 sm:px-9 md:px-20 py-5">
         {/* Logo */}
         <div className="logo">
-          <img src={logo} alt="Logo" className="w-20 h-20 md:w-22 md:h-22" />
+          <img src={logo} alt="Logo" onClick={() => navigate("/")} className="w-20 h-20 hover:cursor-pointer md:w-22 md:h-22" />
         </div>
 
         {/* Desktop Navigation */}
         <div className="hidden md:flex items-center space-x-[8px]">
           <a
-            href="#"
+            onClick={() => navigate("/login")}
             className="flex justify-center items-center w-[127px] h-[48px] bg-white text-black border border-[#75716B] text-[16px] text-center rounded-full 
-          hover:shadow-lg hover:scale-105 transition duration-200"
+          hover:shadow-lg hover:scale-105 hover:cursor-pointer transition duration-200"
           >
             {/* SVG Icon */}
             <svg
@@ -49,7 +49,7 @@ export function Navbar() {
 
           <a
             onClick={() => navigate("/signup")}
-            className="flex justify-center items-center w-[141px] h-[48px] bg-[#26231E] text-white border border-[#75716B] text-[16px] text-center rounded-full hover:scale-105 transition duration-200"
+            className="flex justify-center items-center w-[141px] h-[48px] bg-[#26231E] text-white border border-[#75716B] text-[16px] text-center rounded-full hover:scale-105 hover:cursor-pointer transition duration-200"
           >
             Sign up
           </a>
@@ -71,7 +71,7 @@ export function Navbar() {
         <div className="md:hidden w-full bg-[#F9F8F6] border-b border-[#DAD6D1] py-4 px-4">
           <div className="flex flex-col items-center space-y-4">
             <a
-              href="#"
+              onClick={() => navigate("/login")}
               className="w-[80%] bg-white text-black border border-[#75716B] px-[40px] py-[12px] text-[16px] text-center rounded-full hover:shadow-lg hover:scale-105 transition duration-200"
             >
               Log in
