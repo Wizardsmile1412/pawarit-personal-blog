@@ -5,7 +5,8 @@ import axios from "axios";
 import { Heart } from "lucide-react";
 import { toast, Toaster } from "sonner";
 import "../assets/Global.css";
-import { Navbar, Footer } from "../components/PageContainer";
+import { Footer } from "../components/PageContainer";
+import { Navbar } from "../components/ui/Navbar";
 import AuthorSidebar from "../components/ui/AuthorSidebar";
 import CommentList from "../components/ui/CommentList";
 
