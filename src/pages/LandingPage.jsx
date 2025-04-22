@@ -1,4 +1,5 @@
-import {Navbar, HeroSection, Footer} from '../components/PageContainer'
+import {HeroSection, Footer} from '../components/PageContainer'
+import { Navbar } from '../components/ui/Navbar';
 import ArticleSection from '../components/ArticleSection';
 
 function LandingPage() {

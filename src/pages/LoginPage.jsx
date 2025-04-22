@@ -1,4 +1,4 @@
-import { Navbar } from "@/components/PageContainer";
+import { Navbar } from "@/components/ui/Navbar";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
