@@ -7,7 +7,7 @@ import LoginPage from './pages/LoginPage';
 import { ProfilePage, ResetPasswordPage } from './pages/MemberManagement';
 import { AdminLoginPage } from './pages/AdminPages/AdminLoginPage';
 import { ArticleManagement, CreateArticle, CategoryManagement, CreateCategory } from './pages/AdminPages/ArticleManagement';
-
+import { AdminProfileManagement } from './pages/AdminPages/AdminProfilePage';
 
 
 function App() {
@@ -25,6 +25,7 @@ function App() {
         <Route path='/create-article' element={<CreateArticle/>} />
         <Route path='/category-management' element={<CategoryManagement/>} />
         <Route path='/create-category' element={<CreateCategory/>} />
+        <Route path='/admin-profile' element={<AdminProfileManagement/>} />
       </Routes>
     </Router>
   )
