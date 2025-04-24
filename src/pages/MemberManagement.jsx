@@ -1,4 +1,4 @@
-import { MemberNavbar } from "@/components/ui/Navbar";
+import { MemberNavbar } from "@/components/Navbar";
 import React, { useState } from "react";
 import logo from "../assets/logo.png";
 import { useNavigate } from "react-router-dom";
