@@ -91,14 +91,22 @@ export default function AdminSidebar() {
 
   return (
     <div className="w-64 max-h-screen bg-white border-r border-gray-200">
-      <div className="p-6">
-        <img src={logo} alt="logo" className="w-20 h-20" />
-        <div className="text-orange-300 mt-0.5 ml-1">Admin panel</div>
+      <div className="p-6 flex flex-col">
+        <button
+          onClick={() => navigate("/")}
+          className="p-0 border-none bg-transparent cursor-pointer"
+        >
+          <img src={logo} alt="logo" className="w-20 h-20" />
+        </button>
+        <div className="text-orange-400 text-lg mt-0.5 ml-1">Admin panel</div>
       </div>
 
       <nav className="mt-6">
         {menuItems.map((item) => (
-          <div key={item.path} className={currentPath === item.path ? "bg-gray-200" : ""}>
+          <div
+            key={item.path}
+            className={currentPath === item.path ? "bg-gray-200" : ""}
+          >
             <a
               onClick={() => navigate(item.path)}
               className={`flex items-center px-6 py-4 ${
