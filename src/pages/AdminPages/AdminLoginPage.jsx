@@ -1,14 +1,10 @@
-import { Navbar } from "@/components/Navbar";
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 
-function LoginPage() {
+export function AdminLoginPage() {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
-
-  const navigate = useNavigate();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -26,8 +22,6 @@ function LoginPage() {
 
   return (
     <>
-      <Navbar />
-
       <div className="flex justify-center items-start min-h-screen bg-[#F9F8F6]">
         {/* Main container - responsive width */}
         <div className="flex justify-center w-full mt-10 px-4 sm:px-8">
@@ -37,6 +31,9 @@ function LoginPage() {
                           w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-3xl 
                           bg-[#EFEEEB] rounded-2xl"
           >
+            <h2 className="text-xl font-semibold text-[#F2B68C] text-center mb-2 sm:mb-4">
+              Admin Panel
+            </h2>
             <h1 className="text-4xl font-semibold text-[#26231E] text-center mb-6 sm:mb-10">
               Log in
             </h1>
@@ -79,18 +76,6 @@ function LoginPage() {
               >
                 Log in
               </button>
-
-              <div className="flex justify-center items-center gap-3 mt-2">
-                <span className="text-base text-[#75716B]">
-                  Don't have any account?
-                </span>
-                <a
-                  onClick={() => navigate("/signup")}
-                  className="text-base font-medium text-[#26231E] underline"
-                >
-                  Sign up
-                </a>
-              </div>
             </form>
           </div>
         </div>
@@ -99,4 +84,4 @@ function LoginPage() {
   );
 }
 
-export default LoginPage;
+

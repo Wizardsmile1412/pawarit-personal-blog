@@ -6,7 +6,7 @@ import { Heart } from "lucide-react";
 import { toast, Toaster } from "sonner";
 import "../assets/Global.css";
 import { Footer } from "../components/PageContainer";
-import { Navbar } from "../components/ui/Navbar";
+import { Navbar } from "../components/Navbar";
 import AuthorSidebar from "../components/ui/AuthorSidebar";
 import CommentList from "../components/ui/CommentList";
 
