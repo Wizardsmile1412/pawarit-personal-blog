@@ -65,7 +65,7 @@ export default function AdminSidebar() {
         </a>
 
         <a
-          href="#"
+          onClick={() => navigate("/notification-page")}
           className="flex items-center px-6 py-4 text-gray-500 hover:bg-gray-100"
         >
           <svg

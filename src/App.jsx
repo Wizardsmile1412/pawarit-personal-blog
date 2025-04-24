@@ -8,6 +8,7 @@ import { ProfilePage, ResetPasswordPage } from './pages/MemberManagement';
 import { AdminLoginPage } from './pages/AdminPages/AdminLoginPage';
 import { ArticleManagement, CreateArticle, CategoryManagement, CreateCategory } from './pages/AdminPages/ArticleManagement';
 import { AdminProfileManagement } from './pages/AdminPages/AdminProfilePage';
+import { NotificationPage } from './pages/AdminPages/NotificationPage';
 
 
 function App() {
@@ -26,6 +27,7 @@ function App() {
         <Route path='/category-management' element={<CategoryManagement/>} />
         <Route path='/create-category' element={<CreateCategory/>} />
         <Route path='/admin-profile' element={<AdminProfileManagement/>} />
+        <Route path='/notification-page' element={<NotificationPage/>} />
       </Routes>
     </Router>
   )
