@@ -82,7 +82,7 @@ export default function AdminSidebar() {
         </a>
 
         <a
-          href="#"
+          onClick={() => navigate("/admin-reset-password")}
           className="flex items-center px-6 py-4 text-gray-500 hover:bg-gray-100"
         >
           <svg
@@ -101,7 +101,7 @@ export default function AdminSidebar() {
 
       <div className="absolute bottom-0 w-64 border-t border-gray-200">
         <a
-          href="#"
+          onClick={() => navigate("/")}
           className="flex items-center px-4 py-2 text-gray-500 hover:bg-gray-100"
         >
           <img src={logo} alt="logo" className="w-10 h-10 mr-1" />
