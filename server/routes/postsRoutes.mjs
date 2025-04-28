@@ -1,6 +1,8 @@
 import express from "express";
 import connectionPool from "../utils/db.js";
 import postValidate from "../middlewares/postValidate.mjs";
+import protectAdmin from "../middlewares/protectAdmin.mjs";
+
 
 const postsRouter = express.Router();
 
@@ -84,7 +86,7 @@ postsRouter.get("/:postId", async (req, res) => {
   }
 });
 
-postsRouter.post("/", [postValidate], async (req, res) => {
+postsRouter.post("/", [protectAdmin, postValidate], async (req, res) => {
   const { title, image, category_id, description, content, status_id } =
     req.body;
   const date = new Date();
@@ -124,7 +126,7 @@ postsRouter.post("/", [postValidate], async (req, res) => {
   }
 });
 
-postsRouter.put("/:postId", [postValidate], async (req, res) => {
+postsRouter.put("/:postId", [protectAdmin, postValidate], async (req, res) => {
   const { postId } = req.params;
   const { title, image, category_id, description, content, status_id } =
     req.body;
@@ -170,7 +172,7 @@ postsRouter.put("/:postId", [postValidate], async (req, res) => {
   }
 });
 
-postsRouter.delete("/:postId", async (req, res) => {
+postsRouter.delete("/:postId",[protectAdmin], async (req, res) => {
   const { postId } = req.params;
   const deleteQuery = `delete from posts where id = $1`;
 
