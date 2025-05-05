@@ -2,7 +2,7 @@ import { BrowserRouter as Router, Routes, Route} from 'react-router-dom';
 import "./assets/Global.css";
 import LandingPage from './pages/LandingPage';
 import ViewPostPage from './pages/ViewPostPage';
-import SignupPage from './pages/SignupPage';
+import {SignupPage, RegisterSuccess} from './pages/SignupPage';
 import LoginPage from './pages/LoginPage';
 import { ProfilePage, ResetPasswordPage } from './pages/MemberManagement';
 import { AdminLoginPage } from './pages/AdminPages/AdminLoginPage';
@@ -18,7 +18,8 @@ function App() {
       <Routes>
         <Route path='/' element={<LandingPage/>} />
         <Route path='/post/:postId' element={<ViewPostPage/>} />
-        <Route path='/signup' element={<SignupPage/>} />
+        <Route path='/register' element={<SignupPage/>} />
+        <Route path='/register-success' element={<RegisterSuccess/>} />
         <Route path='/login' element={<LoginPage/>} />
         <Route path='/member-profile' element={<ProfilePage/>} />
         <Route path='/member-profile/reset-password' element={<ResetPasswordPage/>} />

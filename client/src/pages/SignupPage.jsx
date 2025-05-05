@@ -2,7 +2,7 @@ import { Navbar } from "../components/Navbar";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-function SignupPage() {
+export function SignupPage() {
   const [formData, setFormData] = useState({
     name: "",
     username: "",
@@ -125,4 +125,45 @@ function SignupPage() {
   );
 }
 
-export default SignupPage;
+export function RegisterSuccess() {
+  const navigate = useNavigate();
+
+  return (
+    <>
+      <Navbar />
+
+      <div className="flex justify-center items-start min-h-screen bg-[#F9F8F6]">
+        <div className="flex flex-col items-center p-12 mt-12 md:p-16 bg-[#EFEEEB] rounded-2xl w-full max-w-xl mx-4">
+          {/* Green circular success icon */}
+          <div className="bg-green-500 rounded-full p-4 mb-6">
+            <svg
+              className="w-10 h-10 text-white"
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="3"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+          </div>
+
+          {/* Success message */}
+          <h1 className="text-4xl font-semibold text-[#26231E] text-center mb-10">
+            Registration success
+          </h1>
+
+          {/* Continue button */}
+          <button
+            onClick={() => navigate("/")}
+            className="py-3 px-12 bg-[#26231E] text-white font-medium rounded-full hover:bg-[#3a3630] transition-colors"
+          >
+            Continue
+          </button>
+        </div>
+      </div>
+    </>
+  );
+}
