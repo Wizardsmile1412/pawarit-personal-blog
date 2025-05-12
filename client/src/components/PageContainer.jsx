@@ -2,6 +2,7 @@ import React from "react";
 import "@/assets/Global.css";
 import coffeeHero from "@/assets/coffeeHero.jpg";
 import { FaLinkedin, FaGithub, FaGoogle } from "react-icons/fa";
+import { Loader2 } from "lucide-react";
 
 export function HeroSection() {
   return (
@@ -49,5 +50,16 @@ export function Footer() {
         Home page
       </a>
     </footer>
+  );
+}
+
+export function LoadingScreen() {
+  return (
+    <div className="fixed inset-0 flex items-center justify-center">
+      <div className="flex flex-col items-center">
+        <Loader2 className="w-16 h-16 animate-spin text-foreground" />
+        <p className="mt-4 text-lg font-semibold">Loading...</p>
+      </div>
+    </div>
   );
 }
