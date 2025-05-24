@@ -8,7 +8,7 @@ function AuthProvider(props) {
   const [state, setState] = useState({
     loading: null,
     getUserLoading: null,
-    error: null,
+    error: null, 
     user: null,
   });
 

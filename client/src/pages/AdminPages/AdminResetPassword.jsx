@@ -1,4 +1,4 @@
-import AdminSidebar from "@/components/AdminSidebar";
+import AdminSidebar from "@/components/websection/AdminSidebar";
 import { useState } from "react";
 
 export function AdminResetPasswordPage() {

@@ -2,8 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { Search, Edit, Trash2, PlusCircle, ChevronDown } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import AdminSidebar from "@/components/AdminSidebar";
-
+import AdminSidebar from "@/components/websection/AdminSidebar";
 
 export function ArticleManagement() {
   const [articles, setArticles] = useState([]);
@@ -35,9 +34,10 @@ export function ArticleManagement() {
           <h1 className="text-2xl font-bold text-gray-800 inline-block">
             Article management
           </h1>
-          <button 
-          onClick={() => navigate("/create-article")}
-          className="flex items-center bg-black text-white px-6 py-3 rounded-full shadow-lg hover:bg-gray-700 hover:cursor-pointer">
+          <button
+            onClick={() => navigate("/create-article")}
+            className="flex items-center bg-black text-white px-6 py-3 rounded-full shadow-lg hover:bg-gray-700 hover:cursor-pointer"
+          >
             <PlusCircle size={20} className="mr-2" />
             Create article
           </button>
@@ -175,36 +175,36 @@ export function CreateArticle() {
           <div className="mb-8">
             <h2 className="text-gray-600 mb-3">Thumbnail image</h2>
             <div className="flex flex-row gap-6 justify-start w-[780px] items-end">
-            <div className="bg-gray-200 border border-gray-200 rounded-md w-120 h-60 flex items-center justify-center mb-2">
-              {articleData.thumbnail ? (
-                <img
-                  src={URL.createObjectURL(articleData.thumbnail)}
-                  alt="Thumbnail preview"
-                  className="h-full object-contain"
-                />
-              ) : (
-                <div className="text-gray-400">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
-                    <circle cx="8.5" cy="8.5" r="1.5" />
-                    <polyline points="21 15 16 10 5 21" />
-                  </svg>
-                </div>
-              )}
-            </div>
-            <button className=" bg-white border border-gray-400 rounded-full h-12 w-65 px-4 py-2 text-gray-700 mb-2 hover:bg-gray-50">
-              Upload thumbnail image
-            </button>
+              <div className="bg-gray-200 border border-gray-200 rounded-md w-120 h-60 flex items-center justify-center mb-2">
+                {articleData.thumbnail ? (
+                  <img
+                    src={URL.createObjectURL(articleData.thumbnail)}
+                    alt="Thumbnail preview"
+                    className="h-full object-contain"
+                  />
+                ) : (
+                  <div className="text-gray-400">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                      <circle cx="8.5" cy="8.5" r="1.5" />
+                      <polyline points="21 15 16 10 5 21" />
+                    </svg>
+                  </div>
+                )}
+              </div>
+              <button className=" bg-white border border-gray-400 rounded-full h-12 w-65 px-4 py-2 text-gray-700 mb-2 hover:bg-gray-50">
+                Upload thumbnail image
+              </button>
             </div>
           </div>
 
@@ -326,8 +326,6 @@ export function CategoryManagement() {
     ];
     setCategories(mockData);
   }, []);
- 
- 
 
   // const handleDeleteCategory = async (id) => {
   //   try {
@@ -342,7 +340,7 @@ export function CategoryManagement() {
   //   navigate(`/edit-category/${id}`);
   // };
 
-  const filteredCategories = categories.filter(category => 
+  const filteredCategories = categories.filter((category) =>
     category.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -356,9 +354,10 @@ export function CategoryManagement() {
           <h1 className="text-2xl font-bold text-gray-800 inline-block">
             Category management
           </h1>
-          <button 
+          <button
             onClick={() => navigate("/create-category")}
-            className="flex items-center bg-black text-white px-6 py-3 rounded-full shadow-lg hover:bg-gray-700 hover:cursor-pointer">
+            className="flex items-center bg-black text-white px-6 py-3 rounded-full shadow-lg hover:bg-gray-700 hover:cursor-pointer"
+          >
             <PlusCircle size={20} className="mr-2" />
             Create category
           </button>
@@ -395,13 +394,13 @@ export function CategoryManagement() {
                   {category.name}
                 </div>
                 <div className="col-span-2 flex justify-end items-center">
-                  <button 
+                  <button
                     className="p-1 text-gray-400 hover:text-gray-600"
                     // onClick={() => handleEditCategory(category.id)}
                   >
                     <Edit size={18} />
                   </button>
-                  <button 
+                  <button
                     className="p-1 ml-2 text-gray-400 hover:text-gray-600"
                     // onClick={() => handleDeleteCategory(category.id)}
                   >
@@ -431,20 +430,20 @@ export function CreateCategory() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // if (!categoryName.trim()) {
     //   setError("Category name is required");
     //   return;
     // }
-    
+
     // setIsSubmitting(true);
     // setError("");
-    
+
     // try {
     //   await axios.post("https://blog-post-project-api.vercel.app/categories", {
     //     name: categoryName.trim()
     //   });
-      
+
     //   // Navigate back to category management page after successful creation
     //   navigate("/category-management");
     // } catch (error) {
@@ -465,10 +464,11 @@ export function CreateCategory() {
           <h1 className="text-2xl font-bold text-gray-800 inline-block">
             Create category
           </h1>
-          <button 
+          <button
             onClick={handleSubmit}
             // disabled={isSubmitting}
-            className="bg-gray-900 text-white px-8 py-2 rounded-full shadow-md hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed">
+            className="bg-gray-900 text-white px-8 py-2 rounded-full shadow-md hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed"
+          >
             Save
           </button>
         </header>
@@ -476,7 +476,10 @@ export function CreateCategory() {
         <div className="px-20 py-10 w-130">
           <form onSubmit={handleSubmit}>
             <div className="mb-6">
-              <label htmlFor="categoryName" className="block text-gray-700 mb-3">
+              <label
+                htmlFor="categoryName"
+                className="block text-gray-700 mb-3"
+              >
                 Category name
               </label>
               <input

@@ -12,7 +12,7 @@ const PORT = process.env.PORT || 4000;
 app.use(cors());
 app.use(express.json());
 
-app.use("/", authRouter);
+app.use("/auth", authRouter);
 app.use("/posts", postsRouter);
 
 app.listen(PORT, () => {

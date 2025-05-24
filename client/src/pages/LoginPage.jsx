@@ -1,4 +1,4 @@
-import { Navbar } from "@/components/Navbar";
+import { Navbar } from "@/components/websection/Navbar";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
@@ -86,7 +86,7 @@ function LoginPage() {
                 </span>
                 <a
                   onClick={() => navigate("/signup")}
-                  className="text-base font-medium text-[#26231E] underline"
+                  className="text-base font-medium text-[#26231E] underline hover:cursor-pointer"
                 >
                   Sign up
                 </a>

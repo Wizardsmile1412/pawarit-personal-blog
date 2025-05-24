@@ -1,5 +1,5 @@
 import { useState, useRef } from "react";
-import AdminSidebar from "@/components/AdminSidebar";
+import AdminSidebar from "@/components/websection/AdminSidebar";
 import logo from "@/assets/logo.png";
 
 export function AdminProfileManagement() {
@@ -7,7 +7,7 @@ export function AdminProfileManagement() {
     name: "Thompson P.",
     username: "thompson",
     email: "thompson.p@gmail.com",
-    bio: "I am a pet enthusiast and freelance writer."
+    bio: "I am a pet enthusiast and freelance writer.",
   });
   const [profilePicture, setProfilePicture] = useState(""); // Placeholder
   const [characterCount, setCharacterCount] = useState(profileData.bio.length);
@@ -15,14 +15,14 @@ export function AdminProfileManagement() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    
+
     if (name === "bio") {
       setCharacterCount(value.length);
     }
-    
+
     setProfileData({
       ...profileData,
-      [name]: value
+      [name]: value,
     });
   };
 
@@ -56,9 +56,10 @@ export function AdminProfileManagement() {
           <h1 className="text-2xl font-bold text-gray-800 inline-block">
             Profile
           </h1>
-          <button 
+          <button
             onClick={handleSubmit}
-            className="bg-gray-900 text-white px-8 py-2 rounded-full shadow-md hover:bg-gray-800">
+            className="bg-gray-900 text-white px-8 py-2 rounded-full shadow-md hover:bg-gray-800"
+          >
             Save
           </button>
         </header>
@@ -67,29 +68,30 @@ export function AdminProfileManagement() {
           <form onSubmit={handleSubmit}>
             {/* Profile Picture Section */}
             <div className="flex items-center mb-8">
-              <div 
+              <div
                 className="w-24 h-24 rounded-full overflow-hidden mr-4 bg-gray-200 cursor-pointer"
                 onClick={handleProfilePictureClick}
               >
                 {/* Using a placeholder image to match the screenshot */}
-                <img 
-                  src={profilePicture || logo} 
-                  alt="Profile" 
-                  className="w-full h-full object-cover" 
+                <img
+                  src={profilePicture || logo}
+                  alt="Profile"
+                  className="w-full h-full object-cover"
                 />
               </div>
-              <button 
+              <button
                 type="button"
                 onClick={handleProfilePictureClick}
-                className="bg-white border border-gray-300 rounded-full px-6 py-3 text-black hover:bg-gray-50">
+                className="bg-white border border-gray-300 rounded-full px-6 py-3 text-black hover:bg-gray-50"
+              >
                 Upload profile picture
               </button>
-              <input 
-                type="file" 
+              <input
+                type="file"
                 ref={fileInputRef}
                 onChange={handleFileChange}
                 accept="image/*"
-                className="hidden" 
+                className="hidden"
               />
             </div>
 

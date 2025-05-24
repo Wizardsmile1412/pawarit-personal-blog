@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import "@/assets/Global.css";
-import logo from "../assets/logo.png";
+import logo from "@/assets/logo.png";
 
 export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -50,7 +50,7 @@ export function Navbar() {
           </a>
 
           <a
-            onClick={() => navigate("/signup")}
+            onClick={() => navigate("/register")}
             className="flex justify-center items-center w-[141px] h-[48px] bg-[#26231E] text-white border border-[#75716B] text-[16px] text-center rounded-full hover:scale-105 hover:cursor-pointer transition duration-200"
           >
             Sign up

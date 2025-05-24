@@ -1,5 +1,5 @@
 import { Navigate } from "react-router-dom";
-import { LoadingScreen } from "../PageContainer";
+import { LoadingScreen } from "../websection/PageContainer";
 
 function AuthenticationRoute({ isLoading, isAuthenticated, children }) {
   if (isLoading === null || isLoading) {
