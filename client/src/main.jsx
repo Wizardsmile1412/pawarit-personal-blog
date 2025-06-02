@@ -1,14 +1,14 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import App from './App.jsx'
-import './assets/Global.css'
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import App from "./App.jsx";
+import "./assets/Global.css";
 import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "@/context/authentication.jsx";
-import jwtInterceptor from './utils/jwtInterceptor.js'
+import jwtInterceptor from "./utils/jwtInterceptor.js";
 
 jwtInterceptor();
 
-createRoot(document.getElementById('root')).render(
+createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>
       <AuthProvider>
@@ -16,4 +16,4 @@ createRoot(document.getElementById('root')).render(
       </AuthProvider>
     </BrowserRouter>
   </StrictMode>
-)
+);

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import axiosInstance from "@/api/axiosInstance";
 
 const AuthContext = React.createContext();
 
@@ -8,7 +8,7 @@ function AuthProvider(props) {
   const [state, setState] = useState({
     loading: null,
     getUserLoading: null,
-    error: null, 
+    error: null,
     user: null,
   });
 
@@ -27,9 +27,7 @@ function AuthProvider(props) {
 
     try {
       setState((prevState) => ({ ...prevState, getUserLoading: true }));
-      const response = await axios.get(
-        "http://localhost:4000/auth/get-user"
-      );
+      const response = await axiosInstance.get("/auth/get-user");
       setState((prevState) => ({
         ...prevState,
         user: response.data,
@@ -46,16 +44,13 @@ function AuthProvider(props) {
   };
 
   useEffect(() => {
-    fetchUser(); 
+    fetchUser();
   }, []);
 
   const login = async (data) => {
     try {
       setState((prevState) => ({ ...prevState, loading: true, error: null }));
-      const response = await axios.post(
-        "http://localhost:4000/auth/login",
-        data
-      );
+      const response = await axiosInstance.post("/auth/login", data);
       const token = response.data.access_token;
       localStorage.setItem("token", token);
 
@@ -75,10 +70,7 @@ function AuthProvider(props) {
   const register = async (data) => {
     try {
       setState((prevState) => ({ ...prevState, loading: true, error: null }));
-      await axios.post(
-        "http://localhost:4000/auth/register",
-        data
-      );
+      await axiosInstance.post("/auth/register", data);
       setState((prevState) => ({ ...prevState, loading: false, error: null }));
       navigate("/sign-up/success");
     } catch (error) {
@@ -118,4 +110,5 @@ function AuthProvider(props) {
 
 const useAuth = () => React.useContext(AuthContext);
 
+// eslint-disable-next-line react-refresh/only-export-components
 export { AuthProvider, useAuth };

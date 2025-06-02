@@ -18,11 +18,13 @@ import {
 import { AdminProfileManagement } from "./pages/AdminPages/AdminProfilePage";
 import { NotificationPage } from "./pages/AdminPages/NotificationPage";
 import { AdminResetPasswordPage } from "./pages/AdminPages/AdminResetPassword";
+import ScrollToTop from "@/utils/ScrollToTop";
 
 function App() {
   const { isAuthenticated, state } = useAuth();
   return (
     <div className="App">
+      <ScrollToTop />
       <Routes>
         {/* เส้นทางสาธารณะที่ทุกคนเข้าถึงได้ */}
         <Route path="/" element={<LandingPage />} />

@@ -1,6 +1,7 @@
 import { Navbar } from "../components/websection/Navbar";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/authentication";
 
 export function SignupPage() {
   const [formData, setFormData] = useState({
@@ -9,7 +10,8 @@ export function SignupPage() {
     email: "",
     password: "",
   });
-
+  const { register, state } = useAuth();
+  const [errors, setErrors] = useState({});
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -20,10 +22,24 @@ export function SignupPage() {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Form submitted:", formData);
-    // Add your authentication logic here
+    const newErrors = {};
+    if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = "Email must be a valid email";
+    }
+    if (formData.password.length < 6) {
+      newErrors.password = "Password must be at least 6 characters";
+    }
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length > 0) return;
+
+    const result = await register(formData);
+    if (result?.error) {
+      alert(result.error);
+    }
   };
 
   return (
@@ -41,6 +57,7 @@ export function SignupPage() {
 
             <form
               onSubmit={handleSubmit}
+              noValidate
               className="flex flex-col w-full gap-6"
             >
               <div className="flex flex-col gap-1">
@@ -81,8 +98,15 @@ export function SignupPage() {
                   value={formData.email}
                   onChange={handleChange}
                   placeholder="Email"
-                  className="p-3 pl-4 border border-[#DAD6D1] rounded-lg bg-white text-base font-medium text-[#75716B] focus:outline-none focus:ring-1 focus:ring-[#26231E]"
+                  className={`p-3 pl-4 border rounded-lg bg-white text-base font-medium focus:outline-none focus:ring-1 ${
+                    errors.email
+                      ? "border-[#EB5164] text-[#EB5164] focus:ring-[#EB5164]"
+                      : "border-[#DAD6D1] text-[#75716B] focus:ring-[#26231E]"
+                  }`}
                 />
+                {errors.email && (
+                  <span className="text-[#EB5164] text-xs">{errors.email}</span>
+                )}
               </div>
 
               <div className="flex flex-col gap-1">
@@ -95,15 +119,25 @@ export function SignupPage() {
                   value={formData.password}
                   onChange={handleChange}
                   placeholder="Password"
-                  className="p-3 pl-4 border border-[#DAD6D1] rounded-lg bg-white text-base font-medium text-[#75716B] focus:outline-none focus:ring-1 focus:ring-[#26231E]"
+                  className={`p-3 pl-4 border rounded-lg bg-white text-base font-medium focus:outline-none focus:ring-1 ${
+                    errors.password
+                      ? "border-[#EB5164] text-[#EB5164] focus:ring-[#EB5164]"
+                      : "border-[#DAD6D1] text-[#75716B] focus:ring-[#26231E]"
+                  }`}
                 />
+                {errors.password && (
+                  <span className="text-[#EB5164] text-xs">
+                    {errors.password}
+                  </span>
+                )}
               </div>
 
               <button
                 type="submit"
                 className="mt-2 py-3 px-10 bg-[#26231E] text-white font-medium rounded-full w-fit self-center hover:bg-[#3a3630] transition-colors"
+                disabled={state.loading}
               >
-                Sign up
+                {state.loading ? "Signing up..." : "Sign up"}
               </button>
 
               <div className="flex justify-center items-center gap-3 mt-2">

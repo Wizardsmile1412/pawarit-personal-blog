@@ -14,8 +14,8 @@ const LoginDialog = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg max-w-md w-full p-6 relative">
+    <div className="fixed inset-0 bg-[#F9F8F6] bg-opacity-40 backdrop-blur-sm flex w-full items-center justify-center z-50">
+      <div className="bg-white rounded-lg max-w-md w-full p-6 relative shadow-xl">
         <button
           onClick={onClose}
           className="absolute top-4 right-4"
@@ -292,14 +292,14 @@ function ViewPostPage() {
           <div className="author-profile hidden md:block self-start sticky top-6 h-fit w-1/4">
             <AuthorSidebar post={postInfo} />
           </div>
-
-          {/* Login Dialog */}
-          <LoginDialog
-            isOpen={loginDialogOpen}
-            onClose={() => setLoginDialogOpen(false)}
-          />
         </section>
       </section>
+
+      {/* Login Dialog */}
+      <LoginDialog
+        isOpen={loginDialogOpen}
+        onClose={() => setLoginDialogOpen(false)}
+      />
 
       <Footer />
     </>

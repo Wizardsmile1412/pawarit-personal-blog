@@ -1,11 +1,9 @@
 import { createClient } from "@supabase/supabase-js";
-import connectionPool from "../utils/db.js";
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_ANON_KEY
 );
-
 
 const protectAdmin = async (req, res, next) => {
   const token = req.headers.authorization?.split(" ")[1]; 
@@ -15,6 +13,7 @@ const protectAdmin = async (req, res, next) => {
   }
 
   try {
+    // Verify the token with Supabase Auth
     const { data, error } = await supabase.auth.getUser(token);
 
     if (error || !data.user) {
@@ -23,16 +22,29 @@ const protectAdmin = async (req, res, next) => {
 
     const supabaseUserId = data.user.id;
 
-    const query = `SELECT role FROM users WHERE id = $1`;
-    const values = [supabaseUserId];
-    const { rows, error: dbError } = await connectionPool.query(query, values);
+    // Get user role from Supabase database
+    const { data: userData, error: dbError } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', supabaseUserId)
+      .single();
 
-    if (dbError || !rows.length) {
+    if (dbError) {
+      console.error('Database error:', dbError);
+      if (dbError.code === 'PGRST116') { // No rows returned
+        return res.status(404).json({ error: "User role not found" });
+      }
+      return res.status(500).json({ error: "Database error occurred" });
+    }
+
+    if (!userData) {
       return res.status(404).json({ error: "User role not found" });
     }
 
-    req.user = { ...data.user, role: rows[0].role };
+    // Attach user data to request object
+    req.user = { ...data.user, role: userData.role };
 
+    // Check if user has admin role
     if (req.user.role !== "admin") {
       return res
         .status(403)
@@ -41,6 +53,7 @@ const protectAdmin = async (req, res, next) => {
 
     next();
   } catch (err) {
+    console.error('Middleware error:', err);
     res.status(500).json({ error: "Internal server error" });
   }
 };
