@@ -1,5 +1,5 @@
 import ReactMarkdown from "react-markdown";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
 import { Heart } from "lucide-react";
@@ -11,6 +11,7 @@ import AuthorSidebar from "../components/ui/AuthorSidebar";
 import CommentList from "../components/ui/CommentList";
 
 const LoginDialog = ({ isOpen, onClose }) => {
+  const navigate = useNavigate();
   if (!isOpen) return null;
 
   return (
@@ -44,15 +45,27 @@ const LoginDialog = ({ isOpen, onClose }) => {
           </h2>
         </div>
 
-        <button className="block mx-auto max-w-[207px] bg-[#26231E] text-white py-3 px-6 rounded-full font-medium mb-4">
+        <button
+          className="block mx-auto max-w-[207px] bg-[#26231E] text-white py-3 px-6 rounded-full font-medium mb-4 cursor-pointer hover:bg-[#1F201B] transition-colors duration-200"
+          onClick={() => {
+            navigate("/register");
+            onClose();
+          }}
+        >
           Create account
         </button>
 
         <div className="text-center text-[#75716B]">
           Already have an account?{" "}
-          <a href="/login" className="text-[#26231E] underline font-medium">
+          <span
+            onClick={() => {
+              navigate("/login");
+              onClose();
+            }}
+            className="text-[#26231E] underline font-medium cursor-pointer hover:text-blue-600"
+          >
             Log in
-          </a>
+          </span>
         </div>
       </div>
     </div>

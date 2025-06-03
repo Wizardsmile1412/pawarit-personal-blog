@@ -4,7 +4,7 @@ import protectUser from "../middlewares/protectUser.mjs";
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
-  process.env.SUPABASE_ANON_KEY
+  process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
 const authRouter = express.Router();
@@ -15,9 +15,9 @@ authRouter.post("/register", async (req, res) => {
   try {
     // Check if username already exists using Supabase
     const { data: existingUsers, error: usernameCheckError } = await supabase
-      .from('users')
-      .select('*')
-      .eq('username', username);
+      .from("users")
+      .select("*")
+      .eq("username", username);
 
     if (usernameCheckError) {
       return res.status(500).json({ error: "Database error occurred" });
@@ -49,14 +49,15 @@ authRouter.post("/register", async (req, res) => {
 
     // Insert user data into Supabase database
     const { data: insertedUser, error: insertError } = await supabase
-      .from('users')
+      .from("users")
       .insert([
         {
           id: supabaseUserId,
+          email: email,
           username: username,
           name: name,
-          role: 'user'
-        }
+          role: "user",
+        },
       ])
       .select()
       .single();
@@ -121,9 +122,9 @@ authRouter.get("/get-user", [protectUser], async (req, res) => {
 
     // Get user data from Supabase database
     const { data: userData, error: userDataError } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', supabaseUserId)
+      .from("users")
+      .select("*")
+      .eq("id", supabaseUserId)
       .single();
 
     if (userDataError) {
@@ -173,7 +174,7 @@ authRouter.put("/reset-password", [protectUser], async (req, res) => {
     if (loginError) {
       return res.status(400).json({ error: "Invalid old password" });
     }
-    
+
     const { data, error } = await supabase.auth.updateUser({
       password: newPassword,
     });

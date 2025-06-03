@@ -191,7 +191,7 @@ export function RegisterSuccess() {
 
           {/* Continue button */}
           <button
-            onClick={() => navigate("/")}
+            onClick={() => navigate("/login")}
             className="py-3 px-12 bg-[#26231E] text-white font-medium rounded-full hover:bg-[#3a3630] transition-colors"
           >
             Continue

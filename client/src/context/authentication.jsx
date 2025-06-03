@@ -72,7 +72,7 @@ function AuthProvider(props) {
       setState((prevState) => ({ ...prevState, loading: true, error: null }));
       await axiosInstance.post("/auth/register", data);
       setState((prevState) => ({ ...prevState, loading: false, error: null }));
-      navigate("/sign-up/success");
+      navigate("/register-success");
     } catch (error) {
       setState((prevState) => ({
         ...prevState,
