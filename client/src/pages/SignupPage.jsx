@@ -1,7 +1,7 @@
 import { Navbar } from "../components/websection/Navbar";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/context/authentication";
+import { useAuth } from "@/contexts/authentication";
 
 export function SignupPage() {
   const [formData, setFormData] = useState({

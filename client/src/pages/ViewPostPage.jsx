@@ -7,8 +7,8 @@ import { toast, Toaster } from "sonner";
 import "../assets/Global.css";
 import { Footer } from "../components/websection/PageContainer";
 import { Navbar } from "../components/websection/Navbar";
-import AuthorSidebar from "../components/ui/AuthorSidebar";
-import CommentList from "../components/ui/CommentList";
+import AuthorSidebar from "@/components/websection/AuthorSidebar";
+import CommentList from "@/components/websection/CommentList";
 
 const LoginDialog = ({ isOpen, onClose }) => {
   const navigate = useNavigate();

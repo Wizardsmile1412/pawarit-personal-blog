@@ -1,5 +1,5 @@
 import { Routes, Route } from "react-router-dom";
-import { useAuth } from "@/context/authentication";
+import { useAuth } from "@/contexts/authentication";
 import AuthenticationRoute from "./components/auth/AuthenticationRoute";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import "./assets/Global.css";
@@ -19,11 +19,14 @@ import { AdminProfileManagement } from "./pages/AdminPages/AdminProfilePage";
 import { NotificationPage } from "./pages/AdminPages/NotificationPage";
 import { AdminResetPasswordPage } from "./pages/AdminPages/AdminResetPassword";
 import ScrollToTop from "@/utils/ScrollToTop";
+import { ToastProvider } from "@/contexts/ToastProvider";
+import { ToastContainer } from "@/components/websection/ToastAlert";
 
 function App() {
   const { isAuthenticated, state } = useAuth();
   return (
     <div className="App">
+      <ToastProvider>
       <ScrollToTop />
       <Routes>
         {/* เส้นทางสาธารณะที่ทุกคนเข้าถึงได้ */}
@@ -196,6 +199,9 @@ function App() {
           }
         />
       </Routes>
+
+      <ToastContainer />
+      </ToastProvider>
     </div>
   );
 }
