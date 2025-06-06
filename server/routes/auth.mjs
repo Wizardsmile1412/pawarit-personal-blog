@@ -1,13 +1,70 @@
 import express from "express";
 import { createClient } from "@supabase/supabase-js";
 import protectUser from "../middlewares/protectUser.mjs";
+import multer from "multer";
+import { v2 as cloudinary } from "cloudinary";
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
+// Configure Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// Configure multer for file uploads (memory storage)
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'), false);
+    }
+  },
+});
+
 const authRouter = express.Router();
+
+// Helper function to upload to Cloudinary
+const uploadToCloudinary = (buffer, folder = 'profile_pictures') => {
+  return new Promise((resolve, reject) => {
+    cloudinary.uploader.upload_stream(
+      {
+        folder: folder,
+        transformation: [
+          { width: 400, height: 400, crop: 'fill' }, // Auto-resize to 400x400
+          { quality: 'auto' }, // Auto-optimize quality
+        ],
+      },
+      (error, result) => {
+        if (error) {
+          reject(error);
+        } else {
+          resolve(result);
+        }
+      }
+    ).end(buffer);
+  });
+};
+
+// Helper function to delete from Cloudinary
+const deleteFromCloudinary = async (publicId) => {
+  try {
+    const result = await cloudinary.uploader.destroy(publicId);
+    return result.result === 'ok';
+  } catch (error) {
+    console.error('Cloudinary delete error:', error);
+    return false;
+  }
+};
 
 authRouter.post("/register", async (req, res) => {
   const { email, password, username, name } = req.body;
@@ -138,8 +195,147 @@ authRouter.get("/get-user", [protectUser], async (req, res) => {
       name: userData.name,
       role: userData.role,
       profilePic: userData.profile_pic,
+      profilePicPublicId: userData.profile_pic_public_id,
     });
   } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// Upload profile picture endpoint
+authRouter.post("/upload-profile-pic", [protectUser, upload.single('profilePic')], async (req, res) => {
+  const token = req.headers.authorization?.split(" ")[1];
+
+  if (!token) {
+    return res.status(401).json({ error: "Unauthorized: Token missing" });
+  }
+
+  if (!req.file) {
+    return res.status(400).json({ error: "No image file provided" });
+  }
+
+  try {
+    // Get current user
+    const { data: userData, error: userError } = await supabase.auth.getUser(token);
+    if (userError) {
+      return res.status(401).json({ error: "Unauthorized: Invalid token" });
+    }
+
+    const userId = userData.user.id;
+
+    // Get current user data to check for existing profile pic
+    const { data: currentUser, error: currentUserError } = await supabase
+      .from("users")
+      .select("profile_pic_public_id")
+      .eq("id", userId)
+      .single();
+
+    if (currentUserError) {
+      return res.status(500).json({ error: "Failed to fetch current user data" });
+    }
+
+    // Delete old profile picture if exists
+    if (currentUser.profile_pic_public_id) {
+      await deleteFromCloudinary(currentUser.profile_pic_public_id);
+    }
+
+    // Upload new image to Cloudinary
+    const result = await uploadToCloudinary(req.file.buffer);
+
+    // Update user profile in database
+    const { data: updatedUser, error: updateError } = await supabase
+      .from("users")
+      .update({
+        profile_pic: result.secure_url,
+        profile_pic_public_id: result.public_id,
+      })
+      .eq("id", userId)
+      .select()
+      .single();
+
+    if (updateError) {
+      // If database update fails, clean up uploaded image
+      await deleteFromCloudinary(result.public_id);
+      return res.status(500).json({ error: "Failed to update profile picture" });
+    }
+
+    res.status(200).json({
+      message: "Profile picture updated successfully",
+      profilePic: result.secure_url,
+      profilePicPublicId: result.public_id,
+    });
+
+  } catch (error) {
+    console.error('Upload error:', error);
+    res.status(500).json({ error: "Failed to upload profile picture" });
+  }
+});
+
+// Update user profile endpoint
+authRouter.put("/update-profile", [protectUser], async (req, res) => {
+  const token = req.headers.authorization?.split(" ")[1];
+  const { name, username } = req.body;
+
+  if (!token) {
+    return res.status(401).json({ error: "Unauthorized: Token missing" });
+  }
+
+  try {
+    const { data: userData, error: userError } = await supabase.auth.getUser(token);
+    if (userError) {
+      return res.status(401).json({ error: "Unauthorized: Invalid token" });
+    }
+
+    const userId = userData.user.id;
+
+    // Check if username is already taken (if username is being updated)
+    if (username) {
+      const { data: existingUsers, error: usernameCheckError } = await supabase
+        .from("users")
+        .select("id")
+        .eq("username", username)
+        .neq("id", userId);
+
+      if (usernameCheckError) {
+        return res.status(500).json({ error: "Database error occurred" });
+      }
+
+      if (existingUsers && existingUsers.length > 0) {
+        return res.status(400).json({ error: "This username is already taken" });
+      }
+    }
+
+    // Update user profile
+    const updateData = {};
+    if (name) updateData.name = name;
+    if (username) updateData.username = username;
+
+    const { data: updatedUser, error: updateError } = await supabase
+      .from("users")
+      .update(updateData)
+      .eq("id", userId)
+      .select()
+      .single();
+
+    if (updateError) {
+      return res.status(500).json({ error: "Failed to update profile" });
+    }
+
+    res.status(200).json({
+      message: "Profile updated successfully",
+      user: {
+        id: updatedUser.id,
+        email: updatedUser.email,
+        username: updatedUser.username,
+        name: updatedUser.name,
+        role: updatedUser.role,
+        profilePic: updatedUser.profile_pic,
+        profilePicPublicId: updatedUser.profile_pic_public_id,
+      },
+    });
+
+  } catch (error) {
+    console.error('Update profile error:', error);
     res.status(500).json({ error: "Internal server error" });
   }
 });

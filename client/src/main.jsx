@@ -5,8 +5,10 @@ import "./assets/Global.css";
 import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "@/contexts/authentication.jsx";
 import jwtInterceptor from "./utils/jwtInterceptor.js";
+import axiosInstance from "@/api/axiosInstance.js";
 
 jwtInterceptor();
+jwtInterceptor(axiosInstance);
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>

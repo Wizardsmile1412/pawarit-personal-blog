@@ -6,8 +6,8 @@ const AuthContext = React.createContext();
 
 function AuthProvider(props) {
   const [state, setState] = useState({
-    loading: null,
-    getUserLoading: null,
+    loading: false,
+    getUserLoading: true,
     error: null,
     user: null,
   });
@@ -32,8 +32,12 @@ function AuthProvider(props) {
         ...prevState,
         user: response.data,
         getUserLoading: false,
+        error: null, // Clear any previous errors
       }));
     } catch (error) {
+      console.error("Failed to fetch user:", error.message);
+
+      localStorage.removeItem("token");
       setState((prevState) => ({
         ...prevState,
         error: error.message,
@@ -44,7 +48,15 @@ function AuthProvider(props) {
   };
 
   useEffect(() => {
-    fetchUser();
+    const token = localStorage.getItem("token");
+    if (token) {
+      fetchUser();
+    } else {
+      setState((prevState) => ({
+        ...prevState,
+        getUserLoading: false,
+      }));
+    }
   }, []);
 
   const login = async (data) => {
@@ -74,19 +86,24 @@ function AuthProvider(props) {
       setState((prevState) => ({ ...prevState, loading: false, error: null }));
       navigate("/register-success");
     } catch (error) {
+      const errorMessage = error.response?.data?.error || "Registration failed";
       setState((prevState) => ({
         ...prevState,
         loading: false,
-        error: error.response?.data?.error || "Registration failed",
+        error: errorMessage,
       }));
-      return { error: state.error };
+      return { error: errorMessage };
     }
   };
 
-  // ล็อกเอาท์ผู้ใช้
   const logout = () => {
     localStorage.removeItem("token");
-    setState({ user: null, error: null, loading: null });
+    setState({
+      user: null,
+      error: null,
+      loading: false,
+      getUserLoading: false,
+    });
     navigate("/");
   };
 
@@ -101,6 +118,7 @@ function AuthProvider(props) {
         register,
         isAuthenticated,
         fetchUser,
+        user: state.user,
       }}
     >
       {props.children}
@@ -110,5 +128,4 @@ function AuthProvider(props) {
 
 const useAuth = () => React.useContext(AuthContext);
 
-// eslint-disable-next-line react-refresh/only-export-components
 export { AuthProvider, useAuth };

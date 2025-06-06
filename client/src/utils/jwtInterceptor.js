@@ -1,7 +1,7 @@
 import axios from "axios";
 
-function jwtInterceptor() {
-  axios.interceptors.request.use((req) => {
+function jwtInterceptor(axiosInstance = axios) {
+  axiosInstance.interceptors.request.use((req) => {
     const hasToken = Boolean(window.localStorage.getItem("token"));
 
     if (hasToken) {
@@ -14,7 +14,7 @@ function jwtInterceptor() {
     return req;
   });
 
-  axios.interceptors.response.use(
+  axiosInstance.interceptors.response.use(
     (response) => {
       return response;
     },

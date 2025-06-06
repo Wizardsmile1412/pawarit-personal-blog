@@ -1,9 +1,25 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/authentication";
 import "@/assets/Global.css";
 import logo from "@/assets/logo.png";
 
 export function Navbar() {
+  const { isAuthenticated, state } = useAuth();
+
+  if (state.getUserLoading) {
+    return (
+      <nav className="w-full h-[80px] bg-[#F9F8F6] border-b border-[#DAD6D1] flex items-center justify-center px-7 sm:px-9 md:px-20 py-5">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#75716B]"></div>
+      </nav>
+    );
+  }
+
+  return isAuthenticated ? <MemberNavbar /> : <GuestNavbar />;
+}
+
+// Navbar for unauthenticated users
+export function GuestNavbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -91,23 +107,23 @@ export function Navbar() {
   );
 }
 
+// Navbar for authenticated users
 export function MemberNavbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const navigate = useNavigate();
-  
+  const { logout, user } = useAuth();
+
   // Create refs for dropdown menu
   const dropdownRef = useRef(null);
   const profileButtonRef = useRef(null);
 
-  // Handle click outside of dropdown
   useEffect(() => {
     function handleClickOutside(event) {
-      // Close dropdown if click is outside dropdown and not on the profile button
       if (
-        dropdownRef.current && 
+        dropdownRef.current &&
         !dropdownRef.current.contains(event.target) &&
-        profileButtonRef.current && 
+        profileButtonRef.current &&
         !profileButtonRef.current.contains(event.target)
       ) {
         setProfileMenuOpen(false);
@@ -116,12 +132,12 @@ export function MemberNavbar() {
 
     // Add event listener when dropdown is open
     if (profileMenuOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside);
     }
-    
+
     // Clean up event listener
     return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [profileMenuOpen]);
 
@@ -133,88 +149,226 @@ export function MemberNavbar() {
     setProfileMenuOpen(!profileMenuOpen);
   };
 
+  const handleLogout = () => {
+    logout(); // Call logout from auth context
+    navigate("/login");
+  };
+
   return (
     <>
       {/* Navigation Bar */}
       <nav className="w-full h-[80px] bg-[#F9F8F6] border-b border-[#DAD6D1] flex items-center justify-between px-7 sm:px-9 md:px-20 py-5">
         {/* Logo */}
         <div className="logo">
-          <img src={logo} alt="Logo" onClick={() => navigate("/")} className="w-20 h-20 hover:cursor-pointer md:w-22 md:h-22" />
+          <img
+            src={logo}
+            alt="Logo"
+            onClick={() => navigate("/")}
+            className="w-20 h-20 hover:cursor-pointer md:w-22 md:h-22"
+          />
         </div>
 
         {/* Desktop Member Navigation */}
         <div className="hidden md:flex items-center gap-4">
           {/* Notification Bell */}
-          <div className="flex justify-center items-center w-12 h-12 bg-white border border-[#EFEEEB] rounded-full">
+          <div
+            className="flex justify-center items-center w-12 h-12 bg-white border border-[#EFEEEB] rounded-full cursor-pointer hover:bg-[#EFEEEB] transition duration-200"
+            onClick={() => navigate("/notifications")}
+          >
             <div className="relative">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M18 8C18 6.4087 17.3679 4.88258 16.2426 3.75736C15.1174 2.63214 13.5913 2 12 2C10.4087 2 8.88258 2.63214 7.75736 3.75736C6.63214 4.88258 6 6.4087 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z" stroke="#75716B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M13.73 21C13.5542 21.3031 13.3019 21.5547 12.9982 21.7295C12.6946 21.9044 12.3504 21.9965 12 21.9965C11.6496 21.9965 11.3054 21.9044 11.0018 21.7295C10.6982 21.5547 10.4458 21.3031 10.27 21" stroke="#75716B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M18 8C18 6.4087 17.3679 4.88258 16.2426 3.75736C15.1174 2.63214 13.5913 2 12 2C10.4087 2 8.88258 2.63214 7.75736 3.75736C6.63214 4.88258 6 6.4087 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z"
+                  stroke="#75716B"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M13.73 21C13.5542 21.3031 13.3019 21.5547 12.9982 21.7295C12.6946 21.9044 12.3504 21.9965 12 21.9965C11.6496 21.9965 11.3054 21.9044 11.0018 21.7295C10.6982 21.5547 10.4458 21.3031 10.27 21"
+                  stroke="#75716B"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
               {/* Notification indicator */}
-              <div className="absolute top-0 right-0 w-2 h-2 bg-[#EB5164] rounded-full"></div>
+              {/* <div className="absolute top-0 right-0 w-2 h-2 bg-[#EB5164] rounded-full"></div> */}
             </div>
           </div>
 
           {/* User Profile */}
           <div className="relative">
-            <div 
-              className="flex items-center gap-2" 
-            >
+            <div className="flex items-center gap-2">
               <div className="w-12 h-12 bg-white rounded-full overflow-hidden">
-                {/* User Image */}
-                <img src={logo} alt="User" className="w-full h-full object-cover" />
+                {user?.profilePic ? (
+                  <img
+                    src={user.profilePic}
+                    alt="User"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="flex items-center justify-center h-full w-full bg-[#75716B]">
+                    <svg
+                      width="24"
+                      height="24"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      xmlns="http://www.w3.org/2000/svg"
+                    >
+                      <circle
+                        cx="12"
+                        cy="8"
+                        r="4"
+                        stroke="#FFFFFF"
+                        strokeWidth="1.5"
+                      />
+                      <path
+                        d="M5 20C5 16.6863 8.13401 14 12 14C15.866 14 19 16.6863 19 20"
+                        stroke="#FFFFFF"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                  </div>
+                )}
               </div>
-              <span className="font-medium text-[16px] text-[#43403B]">User Name</span>
+              <span className="font-medium text-[16px] text-[#43403B]">
+                {user?.name || "User Name"}
+              </span>
               <div
-              ref={profileButtonRef}
-              className="cursor-pointer" 
-              onClick={toggleProfileMenu}
+                ref={profileButtonRef}
+                className="cursor-pointer hover:bg-[#EFEEEB] rounded-full p-1 transition duration-200"
+                onClick={toggleProfileMenu}
               >
-              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M12 6L8 10L4 6" stroke="#75716B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+                <svg
+                  width="16"
+                  height="16"
+                  viewBox="0 0 16 16"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M12 6L8 10L4 6"
+                    stroke="#75716B"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
               </div>
             </div>
 
             {/* Profile Dropdown Menu */}
             {profileMenuOpen && (
-              <div 
+              <div
                 ref={dropdownRef}
-                className="absolute right-0 mt-2 w-[249px] bg-[#F9F8F6] rounded-xl shadow-lg py-2 z-50"
+                className="absolute right-0 mt-2 w-[249px] bg-[#F9F8F6] rounded-xl shadow-lg py-2 z-50 border border-[#EFEEEB]"
               >
                 {/* Profile Option */}
-                <div className="flex items-center px-4 py-3 hover:bg-[#EFEEEB] cursor-pointer">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mr-3">
-                    <circle cx="12" cy="8" r="4" stroke="#75716B" strokeWidth="1.5"/>
-                    <path d="M5 20C5 16.6863 8.13401 14 12 14C15.866 14 19 16.6863 19 20" stroke="#75716B" strokeWidth="1.5" strokeLinecap="round"/>
+                <div
+                  className="flex items-center px-4 py-3 hover:bg-[#EFEEEB] cursor-pointer transition duration-200"
+                  onClick={() => navigate("/member-profile")}
+                >
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="mr-3"
+                  >
+                    <circle
+                      cx="12"
+                      cy="8"
+                      r="4"
+                      stroke="#75716B"
+                      strokeWidth="1.5"
+                    />
+                    <path
+                      d="M5 20C5 16.6863 8.13401 14 12 14C15.866 14 19 16.6863 19 20"
+                      stroke="#75716B"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                    />
                   </svg>
-                  <span className="font-medium text-[16px] text-[#43403B]">Profile</span>
+                  <span className="font-medium text-[16px] text-[#43403B]">
+                    Profile
+                  </span>
                 </div>
-                
+
                 {/* Reset Password Option */}
-                <div className="flex items-center px-4 py-3 hover:bg-[#EFEEEB] cursor-pointer">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mr-3">
-                    <path d="M16 15C16 15.7956 15.6839 16.5587 15.1213 17.1213C14.5587 17.6839 13.7956 18 13 18C12.2044 18 11.4413 17.6839 10.8787 17.1213C10.3161 16.5587 10 15.7956 10 15C10 13.89 10.89 13 12 13C13.11 13 14 13.89 14 15C14 15.7956 13.6839 16.5587 13.1213 17.1213" stroke="#75716B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M2 12C2 9.87827 2.84285 7.84344 4.34315 6.34315C5.84344 4.84285 7.87827 4 10 4H14C16.1217 4 18.1566 4.84285 19.6569 6.34315C21.1571 7.84344 22 9.87827 22 12V20C22 20.5304 21.7893 21.0391 21.4142 21.4142C21.0391 21.7893 20.5304 22 20 22H4C3.46957 22 2.96086 21.7893 2.58579 21.4142C2.21071 21.0391 2 20.5304 2 20V12Z" stroke="#75716B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M6 4V2" stroke="#75716B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M18 4V2" stroke="#75716B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M12 13V15" stroke="#75716B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <div
+                  className="flex items-center px-4 py-3 hover:bg-[#EFEEEB] cursor-pointer transition duration-200"
+                  onClick={() => navigate("/member-profile/reset-password")}
+                >
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="mr-3"
+                  >
+                    <path d="M14 15L10 19L14 23" stroke="#26231E" />
+                    <path
+                      d="M5.93782 15.5C5.14475 14.1264 4.84171 12.5241 5.07833 10.9557C5.31495 9.38734 6.07722 7.94581 7.24024 6.86729C8.40327 5.78877 9.8981 5.13721 11.4798 5.01935C13.0616 4.90149 14.6365 5.32432 15.9465 6.21856C17.2565 7.1128 18.224 8.42544 18.6905 9.94144C19.1569 11.4574 19.0947 13.0869 18.5139 14.5629C17.9332 16.0389 16.8684 17.2739 15.494 18.0656C14.1196 18.8573 12.517 19.1588 10.9489 18.9206"
+                      stroke="#26231E"
+                      stroke-linecap="round"
+                    />
                   </svg>
-                  <span className="font-medium text-[16px] text-[#43403B]">Reset password</span>
+                  <span className="font-medium text-[16px] text-[#43403B]">
+                    Reset password
+                  </span>
                 </div>
-                
+
                 {/* Divider */}
                 <div className="border-t border-[#DAD6D1] my-2"></div>
-                
+
                 {/* Log Out Option */}
-                <div className="flex items-center px-4 py-3 hover:bg-[#EFEEEB] cursor-pointer" onClick={() => navigate('/login')}>
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className="mr-3">
-                    <path d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9" stroke="#75716B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M16 17L21 12L16 7" stroke="#75716B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M21 12H9" stroke="#75716B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <div
+                  className="flex items-center px-4 py-3 hover:bg-[#EFEEEB] cursor-pointer transition duration-200"
+                  onClick={handleLogout}
+                >
+                  <svg
+                    width="24"
+                    height="24"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="mr-3"
+                  >
+                    <path
+                      d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9"
+                      stroke="#75716B"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M16 17L21 12L16 7"
+                      stroke="#75716B"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M21 12H9"
+                      stroke="#75716B"
+                      strokeWidth="1.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   </svg>
-                  <span className="font-medium text-[16px] text-[#43403B]">Log out</span>
+                  <span className="font-medium text-[16px] text-[#43403B]">
+                    Log out
+                  </span>
                 </div>
               </div>
             )}
@@ -239,50 +393,163 @@ export function MemberNavbar() {
             {/* User Profile Mobile */}
             <div className="flex items-center gap-3 w-full p-3 border-b border-[#EFEEEB]">
               <div className="w-12 h-12 bg-white rounded-full overflow-hidden">
-                <img src="/user-profile.png" alt="User" className="w-full h-full object-cover" />
+                <img
+                  src={user?.avatar || logo}
+                  alt="User"
+                  className="w-full h-full object-cover"
+                />
               </div>
-              <span className="font-medium text-[16px] text-[#43403B]">Moodeng ja</span>
+              <span className="font-medium text-[16px] text-[#43403B]">
+                {user?.name || "User Name"}
+              </span>
             </div>
-            
+
             {/* Profile Option */}
-            <div className="flex items-center gap-2 w-full p-3" onClick={() => navigate('/profile')}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <circle cx="12" cy="8" r="4" stroke="#75716B" strokeWidth="1.5"/>
-                <path d="M5 20C5 16.6863 8.13401 14 12 14C15.866 14 19 16.6863 19 20" stroke="#75716B" strokeWidth="1.5" strokeLinecap="round"/>
+            <div
+              className="flex items-center gap-2 w-full p-3 hover:bg-[#EFEEEB] rounded-lg cursor-pointer transition duration-200"
+              onClick={() => navigate("/profile")}
+            >
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <circle
+                  cx="12"
+                  cy="8"
+                  r="4"
+                  stroke="#75716B"
+                  strokeWidth="1.5"
+                />
+                <path
+                  d="M5 20C5 16.6863 8.13401 14 12 14C15.866 14 19 16.6863 19 20"
+                  stroke="#75716B"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                />
               </svg>
               <span className="text-[16px] text-[#43403B]">Profile</span>
             </div>
-            
+
             {/* Reset Password Option */}
-            <div className="flex items-center gap-2 w-full p-3" onClick={() => navigate('/reset-password')}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M16 15C16 15.7956 15.6839 16.5587 15.1213 17.1213C14.5587 17.6839 13.7956 18 13 18C12.2044 18 11.4413 17.6839 10.8787 17.1213C10.3161 16.5587 10 15.7956 10 15C10 13.89 10.89 13 12 13C13.11 13 14 13.89 14 15C14 15.7956 13.6839 16.5587 13.1213 17.1213" stroke="#75716B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M2 12C2 9.87827 2.84285 7.84344 4.34315 6.34315C5.84344 4.84285 7.87827 4 10 4H14C16.1217 4 18.1566 4.84285 19.6569 6.34315C21.1571 7.84344 22 9.87827 22 12V20C22 20.5304 21.7893 21.0391 21.4142 21.4142C21.0391 21.7893 20.5304 22 20 22H4C3.46957 22 2.96086 21.7893 2.58579 21.4142C2.21071 21.0391 2 20.5304 2 20V12Z" stroke="#75716B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M6 4V2" stroke="#75716B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M18 4V2" stroke="#75716B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M12 13V15" stroke="#75716B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <div
+              className="flex items-center gap-2 w-full p-3 hover:bg-[#EFEEEB] rounded-lg cursor-pointer transition duration-200"
+              onClick={() => navigate("/reset-password")}
+            >
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M16 15C16 15.7956 15.6839 16.5587 15.1213 17.1213C14.5587 17.6839 13.7956 18 13 18C12.2044 18 11.4413 17.6839 10.8787 17.1213C10.3161 16.5587 10 15.7956 10 15C10 13.89 10.89 13 12 13C13.11 13 14 13.89 14 15C14 15.7956 13.6839 16.5587 13.1213 17.1213"
+                  stroke="#75716B"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M2 12C2 9.87827 2.84285 7.84344 4.34315 6.34315C5.84344 4.84285 7.87827 4 10 4H14C16.1217 4 18.1566 4.84285 19.6569 6.34315C21.1571 7.84344 22 9.87827 22 12V20C22 20.5304 21.7893 21.0391 21.4142 21.4142C21.0391 21.7893 20.5304 22 20 22H4C3.46957 22 2.96086 21.7893 2.58579 21.4142C2.21071 21.0391 2 20.5304 2 20V12Z"
+                  stroke="#75716B"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M6 4V2"
+                  stroke="#75716B"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M18 4V2"
+                  stroke="#75716B"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M12 13V15"
+                  stroke="#75716B"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
               <span className="text-[16px] text-[#43403B]">Reset password</span>
             </div>
-            
+
             {/* Notifications Section */}
-            <div className="flex items-center gap-2 w-full p-3" onClick={() => navigate('/notifications')}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M18 8C18 6.4087 17.3679 4.88258 16.2426 3.75736C15.1174 2.63214 13.5913 2 12 2C10.4087 2 8.88258 2.63214 7.75736 3.75736C6.63214 4.88258 6 6.4087 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z" stroke="#75716B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M13.73 21C13.5542 21.3031 13.3019 21.5547 12.9982 21.7295C12.6946 21.9044 12.3504 21.9965 12 21.9965C11.6496 21.9965 11.3054 21.9044 11.0018 21.7295C10.6982 21.5547 10.4458 21.3031 10.27 21" stroke="#75716B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <div
+              className="flex items-center gap-2 w-full p-3 hover:bg-[#EFEEEB] rounded-lg cursor-pointer transition duration-200"
+              onClick={() => navigate("")}
+            >
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M18 8C18 6.4087 17.3679 4.88258 16.2426 3.75736C15.1174 2.63214 13.5913 2 12 2C10.4087 2 8.88258 2.63214 7.75736 3.75736C6.63214 4.88258 6 6.4087 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z"
+                  stroke="#75716B"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M13.73 21C13.5542 21.3031 13.3019 21.5547 12.9982 21.7295C12.6946 21.9044 12.3504 21.9965 12 21.9965C11.6496 21.9965 11.3054 21.9044 11.0018 21.7295C10.6982 21.5547 10.4458 21.3031 10.27 21"
+                  stroke="#75716B"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
               <span className="text-[16px] text-[#43403B]">Notifications</span>
             </div>
-            
+
             {/* Divider */}
             <div className="border-t border-[#DAD6D1] w-full"></div>
-            
+
             {/* Logout Option */}
-            <div className="flex items-center gap-2 w-full p-3" onClick={() => navigate('/login')}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9" stroke="#75716B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M16 17L21 12L16 7" stroke="#75716B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M21 12H9" stroke="#75716B" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            <div
+              className="flex items-center gap-2 w-full p-3 hover:bg-[#EFEEEB] rounded-lg cursor-pointer transition duration-200"
+              onClick={handleLogout}
+            >
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M9 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V5C3 4.46957 3.21071 3.96086 3.58579 3.58579C3.96086 3.21071 4.46957 3 5 3H9"
+                  stroke="#75716B"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M16 17L21 12L16 7"
+                  stroke="#75716B"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <path
+                  d="M21 12H9"
+                  stroke="#75716B"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
               </svg>
               <span className="text-[16px] text-[#43403B]">Log out</span>
             </div>
