@@ -2,7 +2,7 @@ import { Routes, Route } from "react-router-dom";
 import { useAuth } from "@/contexts/authentication";
 import AuthenticationRoute from "./components/auth/AuthenticationRoute";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
-import "./assets/Global.css";
+import "@/styles/globals.css";
 import LandingPage from "./pages/LandingPage";
 import ViewPostPage from "./pages/ViewPostPage";
 import { SignupPage, RegisterSuccess } from "./pages/SignupPage";
