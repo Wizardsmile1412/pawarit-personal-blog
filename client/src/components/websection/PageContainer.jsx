@@ -1,19 +1,21 @@
 import React from "react";
-import "@/assets/Global.css";
+import "@/styles/globals.css";
 import coffeeHero from "@/assets/coffeeHero.jpg";
 import { FaLinkedin, FaGithub, FaGoogle } from "react-icons/fa";
 import { Loader2 } from "lucide-react";
 
 export function HeroSection() {
   return (
-    <section className="w-full flex flex-col items-center justify-center px-7 my-7 sm:flex-row sm:justify-between sm:px-20">
+    <section className="w-full flex flex-col justify-between px-4 my-10 gap-10 sm:flex-row sm:justify-between sm:px-[120px] sm:my-[60px]">
       {/* 1.1) Quote Block */}
-      <div className="flex flex-col justify-center text-center sm:text-left sm:w-[40%] w-full">
-        <h1 className="text-4xl font-bold">
-          Coffee is more than a drink; it's a journey, a ritual, and a story in
-          every cup.
+      <div className="flex flex-col justify-center w-full text-center gap-4 sm:w-[40%] sm:gap-6">
+        <h1 className="heading-1 sm:text-right">
+          Coffee is more than a drink—
+          <br />
+          it's a journey in every cup.
         </h1>
-        <p className="text-gray-600 my-8">
+
+        <p className="body-1 text-secondary sm:text-right">
           Embark on a journey through the world of coffee. Explore rich flavors,
           brewing secrets, and stories that awaken your senses every day.
         </p>

@@ -1,7 +1,7 @@
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import App from "./App.jsx";
-import "./assets/Global.css";
+import "@/styles/globals.css";
 import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "@/contexts/authentication.jsx";
 import jwtInterceptor from "./utils/jwtInterceptor.js";
