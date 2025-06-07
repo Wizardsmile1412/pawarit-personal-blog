@@ -20,16 +20,28 @@ function LoginPage() {
       ...prevState,
       [name]: value,
     }));
+    
+    // Clear error for this field when user starts typing
+    if (errors[name]) {
+      setErrors((prevErrors) => ({
+        ...prevErrors,
+        [name]: false,
+      }));
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = {};
+    
     if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = "Email must be a valid email";
+      newErrors.email = true; // Just mark as error for styling
+      showError("Invalid email format");
     }
+    
     if (formData.password.length < 6) {
-      newErrors.password = "Password must be at least 6 characters";
+      newErrors.password = true; // Just mark as error for styling
+      showError("Password must be at least 6 characters");
     }
 
     setErrors(newErrors);
@@ -40,6 +52,11 @@ function LoginPage() {
     if (result?.error) {
       console.error("error from server", result.error);
       showError(result.error, "Please try another password or email");
+      // Show visual styling on both email and password fields for server errors
+      setErrors({
+        email: true,
+        password: true,
+      });
     }
   };
 
@@ -73,13 +90,10 @@ function LoginPage() {
                   placeholder="Email"
                   className={`p-3 pl-4 border rounded-lg bg-white text-base font-medium focus:outline-none focus:ring-1 ${
                     errors.email
-                      ? "border-[#EB5164] text-[#EB5164] focus:ring-[#EB5164]"
+                      ? "border-[#EB5164] !text-[#EB5164] focus:ring-[#EB5164]"
                       : "border-[#DAD6D1] text-[#75716B] focus:ring-[#26231E]"
                   }`}
                 />
-                {errors.email && (
-                  <span className="text-[#EB5164] text-xs">{errors.email}</span>
-                )}
               </div>
 
               <div className="flex flex-col gap-1">
@@ -98,20 +112,14 @@ function LoginPage() {
                       : "border-[#DAD6D1] text-[#75716B] focus:ring-[#26231E]"
                   }`}
                 />
-                {errors.password && (
-                  <span className="text-[#EB5164] text-xs">
-                    {errors.password}
-                  </span>
-                )}
               </div>
-
-              <button
-                type="submit"
-                className="mt-2 py-3 px-10 bg-[#26231E] text-white font-medium rounded-full w-fit self-center hover:bg-[#3a3630] transition-colors"
-              >
-                Log in
-              </button>
-
+              
+              <div className="flex justify-center">
+                <button type="submit" className="btn btn-primary !w-[127px]">
+                  Log in
+                </button>
+              </div>
+              
               <div className="flex justify-center items-center gap-3 mt-2">
                 <span className="text-base text-[#75716B]">
                   Don't have any account?

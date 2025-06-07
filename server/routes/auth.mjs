@@ -23,45 +23,45 @@ const upload = multer({
     fileSize: 5 * 1024 * 1024, // 5MB limit
   },
   fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
+    if (file.mimetype.startsWith("image/")) {
       cb(null, true);
     } else {
-      cb(new Error('Only image files are allowed'), false);
+      cb(new Error("Only image files are allowed"), false);
     }
   },
 });
 
 const authRouter = express.Router();
 
-// Helper function to upload to Cloudinary
-const uploadToCloudinary = (buffer, folder = 'profile_pictures') => {
+const uploadToCloudinary = (buffer, folder = "profile_pictures") => {
   return new Promise((resolve, reject) => {
-    cloudinary.uploader.upload_stream(
-      {
-        folder: folder,
-        transformation: [
-          { width: 400, height: 400, crop: 'fill' }, // Auto-resize to 400x400
-          { quality: 'auto' }, // Auto-optimize quality
-        ],
-      },
-      (error, result) => {
-        if (error) {
-          reject(error);
-        } else {
-          resolve(result);
+    cloudinary.uploader
+      .upload_stream(
+        {
+          folder: folder,
+          transformation: [
+            { width: 400, height: 400, crop: "fill" }, // Auto-resize to 400x400
+            { quality: "auto" }, // Auto-optimize quality
+          ],
+        },
+        (error, result) => {
+          if (error) {
+            reject(error);
+          } else {
+            resolve(result);
+          }
         }
-      }
-    ).end(buffer);
+      )
+      .end(buffer);
   });
 };
 
-// Helper function to delete from Cloudinary
 const deleteFromCloudinary = async (publicId) => {
   try {
     const result = await cloudinary.uploader.destroy(publicId);
-    return result.result === 'ok';
+    return result.result === "ok";
   } catch (error) {
-    console.error('Cloudinary delete error:', error);
+    console.error("Cloudinary delete error:", error);
     return false;
   }
 };
@@ -70,7 +70,6 @@ authRouter.post("/register", async (req, res) => {
   const { email, password, username, name } = req.body;
 
   try {
-    // Check if username already exists using Supabase
     const { data: existingUsers, error: usernameCheckError } = await supabase
       .from("users")
       .select("*")
@@ -134,7 +133,6 @@ authRouter.post("/register", async (req, res) => {
 
 authRouter.post("/login", async (req, res) => {
   const { email, password } = req.body;
-
   try {
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -202,76 +200,83 @@ authRouter.get("/get-user", [protectUser], async (req, res) => {
   }
 });
 
-// Upload profile picture endpoint
-authRouter.post("/upload-profile-pic", [protectUser, upload.single('profilePic')], async (req, res) => {
-  const token = req.headers.authorization?.split(" ")[1];
+authRouter.post(
+  "/upload-profile-pic",
+  [protectUser, upload.single("profilePic")],
+  async (req, res) => {
+    const token = req.headers.authorization?.split(" ")[1];
 
-  if (!token) {
-    return res.status(401).json({ error: "Unauthorized: Token missing" });
+    if (!token) {
+      return res.status(401).json({ error: "Unauthorized: Token missing" });
+    }
+
+    if (!req.file) {
+      return res.status(400).json({ error: "No image file provided" });
+    }
+
+    try {
+      // Get current user
+      const { data: userData, error: userError } = await supabase.auth.getUser(
+        token
+      );
+      if (userError) {
+        return res.status(401).json({ error: "Unauthorized: Invalid token" });
+      }
+
+      const userId = userData.user.id;
+
+      // Get current user data to check for existing profile pic
+      const { data: currentUser, error: currentUserError } = await supabase
+        .from("users")
+        .select("profile_pic_public_id")
+        .eq("id", userId)
+        .single();
+
+      if (currentUserError) {
+        return res
+          .status(500)
+          .json({ error: "Failed to fetch current user data" });
+      }
+
+      // Delete old profile picture if exists
+      if (currentUser.profile_pic_public_id) {
+        await deleteFromCloudinary(currentUser.profile_pic_public_id);
+      }
+
+      // Upload new image to Cloudinary
+      const result = await uploadToCloudinary(req.file.buffer);
+
+      // Update user profile in database
+      const { data: updatedUser, error: updateError } = await supabase
+        .from("users")
+        .update({
+          profile_pic: result.secure_url,
+          profile_pic_public_id: result.public_id,
+        })
+        .eq("id", userId)
+        .select()
+        .single();
+
+      if (updateError) {
+        // If database update fails, clean up uploaded image
+        await deleteFromCloudinary(result.public_id);
+        return res
+          .status(500)
+          .json({ error: "Failed to update profile picture" });
+      }
+
+      res.status(200).json({
+        message: "Profile picture updated successfully",
+        profilePic: result.secure_url,
+        profilePicPublicId: result.public_id,
+      });
+    } catch (error) {
+      console.error("Upload error:", error);
+      res.status(500).json({ error: "Failed to upload profile picture" });
+    }
   }
+);
 
-  if (!req.file) {
-    return res.status(400).json({ error: "No image file provided" });
-  }
-
-  try {
-    // Get current user
-    const { data: userData, error: userError } = await supabase.auth.getUser(token);
-    if (userError) {
-      return res.status(401).json({ error: "Unauthorized: Invalid token" });
-    }
-
-    const userId = userData.user.id;
-
-    // Get current user data to check for existing profile pic
-    const { data: currentUser, error: currentUserError } = await supabase
-      .from("users")
-      .select("profile_pic_public_id")
-      .eq("id", userId)
-      .single();
-
-    if (currentUserError) {
-      return res.status(500).json({ error: "Failed to fetch current user data" });
-    }
-
-    // Delete old profile picture if exists
-    if (currentUser.profile_pic_public_id) {
-      await deleteFromCloudinary(currentUser.profile_pic_public_id);
-    }
-
-    // Upload new image to Cloudinary
-    const result = await uploadToCloudinary(req.file.buffer);
-
-    // Update user profile in database
-    const { data: updatedUser, error: updateError } = await supabase
-      .from("users")
-      .update({
-        profile_pic: result.secure_url,
-        profile_pic_public_id: result.public_id,
-      })
-      .eq("id", userId)
-      .select()
-      .single();
-
-    if (updateError) {
-      // If database update fails, clean up uploaded image
-      await deleteFromCloudinary(result.public_id);
-      return res.status(500).json({ error: "Failed to update profile picture" });
-    }
-
-    res.status(200).json({
-      message: "Profile picture updated successfully",
-      profilePic: result.secure_url,
-      profilePicPublicId: result.public_id,
-    });
-
-  } catch (error) {
-    console.error('Upload error:', error);
-    res.status(500).json({ error: "Failed to upload profile picture" });
-  }
-});
-
-// Update user profile endpoint
 authRouter.put("/update-profile", [protectUser], async (req, res) => {
   const token = req.headers.authorization?.split(" ")[1];
   const { name, username } = req.body;
@@ -281,7 +286,9 @@ authRouter.put("/update-profile", [protectUser], async (req, res) => {
   }
 
   try {
-    const { data: userData, error: userError } = await supabase.auth.getUser(token);
+    const { data: userData, error: userError } = await supabase.auth.getUser(
+      token
+    );
     if (userError) {
       return res.status(401).json({ error: "Unauthorized: Invalid token" });
     }
@@ -301,7 +308,9 @@ authRouter.put("/update-profile", [protectUser], async (req, res) => {
       }
 
       if (existingUsers && existingUsers.length > 0) {
-        return res.status(400).json({ error: "This username is already taken" });
+        return res
+          .status(400)
+          .json({ error: "This username is already taken" });
       }
     }
 
@@ -333,23 +342,30 @@ authRouter.put("/update-profile", [protectUser], async (req, res) => {
         profilePicPublicId: updatedUser.profile_pic_public_id,
       },
     });
-
   } catch (error) {
-    console.error('Update profile error:', error);
+    console.error("Update profile error:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 });
 
 authRouter.put("/reset-password", [protectUser], async (req, res) => {
   const token = req.headers.authorization?.split(" ")[1];
-  const { oldPassword, newPassword } = req.body;
+  const { currentPassword, newPassword } = req.body;
 
   if (!token) {
     return res.status(401).json({ error: "Unauthorized: Token missing" });
   }
 
-  if (!newPassword) {
-    return res.status(400).json({ error: "New password is required" });
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({
+      error: "Current password and new password are required",
+    });
+  }
+
+  if (newPassword.length < 6) {
+    return res.status(400).json({
+      error: "New password must be at least 6 characters long",
+    });
   }
 
   try {
@@ -364,11 +380,11 @@ authRouter.put("/reset-password", [protectUser], async (req, res) => {
     const { data: loginData, error: loginError } =
       await supabase.auth.signInWithPassword({
         email: userData.user.email,
-        password: oldPassword,
+        password: currentPassword,
       });
 
     if (loginError) {
-      return res.status(400).json({ error: "Invalid old password" });
+      return res.status(400).json({ error: "Invalid current password" });
     }
 
     const { data, error } = await supabase.auth.updateUser({
