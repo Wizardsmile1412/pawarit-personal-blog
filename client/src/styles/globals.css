@@ -8,7 +8,7 @@
 
 /* Import Tailwind in base layer */
 @import "tailwindcss" layer(base);
-@plugin "tailwindcss-animate";
+/* @plugin "tailwindcss-animate"; */
 
 /* Import typography in base layer */
 @import "./typography.css" layer(base);
@@ -78,12 +78,12 @@
 }
 
 /* Custom variants for dark mode */
-@variant dark (&:where(.dark, .dark *));
+/* @variant dark (&:where(.dark, .dark *)); */
 
-/* Theme configuration */
+/* Theme configuration
 @theme {
   /* Add your theme customizations here if needed */
-}
+/* } */ 
 
 /* Markdown styles - keep these outside layers since they're specific */
 .markdown {
