@@ -20,7 +20,7 @@ import { NotificationPage } from "./pages/AdminPages/NotificationPage";
 import { AdminResetPasswordPage } from "./pages/AdminPages/AdminResetPassword";
 import ScrollToTop from "@/utils/ScrollToTop";
 import { ToastProvider } from "@/contexts/ToastProvider";
-import { ToastContainer } from "@/components/websection/ToastAlert";
+import { ToastContainer } from "@/components/ui/ToastAlert";
 
 function App() {
   const { isAuthenticated, state } = useAuth();

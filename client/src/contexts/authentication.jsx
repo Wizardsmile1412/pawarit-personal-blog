@@ -96,6 +96,34 @@ function AuthProvider(props) {
     }
   };
 
+  const changePassword = async (passwordData) => {
+    try {
+      setState((prevState) => ({ ...prevState, loading: true, error: null }));
+
+      const response = await axiosInstance.put(
+        "/auth/reset-password",
+        passwordData
+      );
+      console.log("Password change response:", response);
+      setState((prevState) => ({
+        ...prevState,
+        loading: false,
+        error: null,
+      }));
+
+      return { success: true, message: response.data.message };
+    } catch (error) {
+      const errorMessage =
+        error.response?.data?.error || "Password change failed";
+      setState((prevState) => ({
+        ...prevState,
+        loading: false,
+        error: errorMessage,
+      }));
+      return { error: errorMessage };
+    }
+  };
+
   const logout = () => {
     localStorage.removeItem("token");
     setState({
@@ -116,6 +144,7 @@ function AuthProvider(props) {
         login,
         logout,
         register,
+        changePassword,
         isAuthenticated,
         fetchUser,
         user: state.user,

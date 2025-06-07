@@ -6,7 +6,7 @@ export const ToastContainer = () => {
   const { toasts, removeToast } = useContext(ToastContext);
 
   return (
-    <div className="fixed top-[600px] right-4 z-50 space-y-2">
+    <div className="fixed right-2 z-50 space-y-2 top-[600px] md:right-4 ">
       {toasts.map((toast) => (
         <ToastAlert
           key={toast.id}
@@ -53,7 +53,7 @@ export const ToastAlert = ({
 
   return (
     <div
-      className={`${alertStyles[type]} border rounded-lg p-4 text-white shadow-lg max-w-lg w-full mx-auto mb-4 animate-in slide-in-from-top duration-300`}
+      className={`${alertStyles[type]} border rounded-lg p-4 text-white shadow-lg max-w-sm md:max-w-lg w-full mx-auto mb-4 animate-in slide-in-from-top duration-300`}
     >
       <div className="flex items-start justify-between">
         <div className="flex items-start space-x-3">
