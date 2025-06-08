@@ -1,10 +1,13 @@
 import { useState } from "react";
+import { useAdminAuth } from "@/contexts/AdminAuthContext";
 
 export function AdminLoginPage() {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
+
+  const { adminLogin, loading, error } = useAdminAuth();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -14,10 +17,16 @@ export function AdminLoginPage() {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Login form submitted:", formData);
-    // Add your authentication logic here
+    console.log("Admin login form submitted:", formData);
+    
+    const result = await adminLogin(formData);
+    
+    if (!result.success) {
+      console.error("Admin login failed:", result.error);
+      // Error is already handled in context and displayed below
+    }
   };
 
   return (
@@ -38,6 +47,13 @@ export function AdminLoginPage() {
               Log in
             </h1>
 
+            {/* Error message display */}
+            {error && (
+              <div className="w-full mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-red-600 text-sm text-center">{error}</p>
+              </div>
+            )}
+
             <form
               onSubmit={handleSubmit}
               className="flex flex-col w-full gap-6 sm:gap-7"
@@ -52,7 +68,9 @@ export function AdminLoginPage() {
                   value={formData.email}
                   onChange={handleChange}
                   placeholder="Email"
-                  className="p-3 pl-4 border border-[#DAD6D1] rounded-lg bg-white text-base font-medium text-[#75716B] focus:outline-none focus:ring-1 focus:ring-[#26231E]"
+                  required
+                  disabled={loading}
+                  className="p-3 pl-4 border border-[#DAD6D1] rounded-lg bg-white text-base font-medium text-[#75716B] focus:outline-none focus:ring-1 focus:ring-[#26231E] disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
 
@@ -66,15 +84,18 @@ export function AdminLoginPage() {
                   value={formData.password}
                   onChange={handleChange}
                   placeholder="Password"
-                  className="p-3 pl-4 border border-[#DAD6D1] rounded-lg bg-white text-base font-medium text-[#75716B] focus:outline-none focus:ring-1 focus:ring-[#26231E]"
+                  required
+                  disabled={loading}
+                  className="p-3 pl-4 border border-[#DAD6D1] rounded-lg bg-white text-base font-medium text-[#75716B] focus:outline-none focus:ring-1 focus:ring-[#26231E] disabled:opacity-50 disabled:cursor-not-allowed"
                 />
               </div>
 
               <button
                 type="submit"
-                className="mt-2 py-3 px-10 bg-[#26231E] text-white font-medium rounded-full w-fit self-center hover:bg-[#3a3630] transition-colors"
+                disabled={loading}
+                className="mt-2 py-3 px-10 bg-[#26231E] text-white font-medium rounded-full w-fit self-center hover:bg-[#3a3630] transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#26231E]"
               >
-                Log in
+                {loading ? "Logging in..." : "Log in"}
               </button>
             </form>
           </div>

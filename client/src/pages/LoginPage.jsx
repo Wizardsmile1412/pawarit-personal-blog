@@ -1,7 +1,7 @@
 import { Navbar } from "@/components/websection/Navbar";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/authentication";
+import { useAuth } from "@/contexts/AuthenticationContext";
 import { useToast } from "@/hooks/useToast";
 
 function LoginPage() {
@@ -20,7 +20,7 @@ function LoginPage() {
       ...prevState,
       [name]: value,
     }));
-    
+
     // Clear error for this field when user starts typing
     if (errors[name]) {
       setErrors((prevErrors) => ({
@@ -33,12 +33,12 @@ function LoginPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = {};
-    
+
     if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = true; // Just mark as error for styling
       showError("Invalid email format");
     }
-    
+
     if (formData.password.length < 6) {
       newErrors.password = true; // Just mark as error for styling
       showError("Password must be at least 6 characters");
@@ -113,13 +113,13 @@ function LoginPage() {
                   }`}
                 />
               </div>
-              
+
               <div className="flex justify-center">
                 <button type="submit" className="btn btn-primary !w-[127px]">
                   Log in
                 </button>
               </div>
-              
+
               <div className="flex justify-center items-center gap-3 mt-2">
                 <span className="text-base text-[#75716B]">
                   Don't have any account?

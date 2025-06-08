@@ -1,7 +1,7 @@
 import { MemberNavbar } from "@/components/websection/Navbar";
 import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/contexts/authentication";
+import { useAuth } from "@/contexts/AuthenticationContext";
 import axiosInstance from "@/api/axiosInstance";
 import { useToast } from "@/hooks/useToast";
 
