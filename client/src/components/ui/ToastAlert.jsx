@@ -6,7 +6,7 @@ export const ToastContainer = () => {
   const { toasts, removeToast } = useContext(ToastContext);
 
   return (
-    <div className="fixed right-2 z-50 space-y-2 top-[600px] md:right-4 ">
+    <div className="fixed right-2 z-50 space-y-2 top-[600px] md:right-8 ">
       {toasts.map((toast) => (
         <ToastAlert
           key={toast.id}

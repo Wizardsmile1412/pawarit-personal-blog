@@ -81,7 +81,7 @@ function AdminAuthProvider(props) {
         admin: adminUser 
       }));
       
-      navigate("/admin-profile");
+      navigate("/article-management");
       
       return { success: true };
     } catch (error) {

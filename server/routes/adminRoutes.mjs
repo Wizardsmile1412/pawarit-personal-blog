@@ -24,7 +24,7 @@ adminRouter.post("/login", async (req, res) => {
       });
 
     if (authError) {
-      return res.status(401).json({ error: "Invalid credentials" });
+      return res.status(401).json({ error: "Your password is incorrect or this email doesn’t exist" });
     }
 
     const { data: userData, error: userError } = await supabase

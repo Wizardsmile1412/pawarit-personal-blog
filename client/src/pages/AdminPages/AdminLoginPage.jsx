@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { useAdminAuth } from "@/contexts/AdminAuthContext";
+import { useToast } from "@/hooks/useToast";
 
 export function AdminLoginPage() {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
-
-  const { adminLogin, loading, error } = useAdminAuth();
+  const { showError } = useToast();
+  const { adminLogin, loading } = useAdminAuth();
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -19,13 +20,12 @@ export function AdminLoginPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log("Admin login form submitted:", formData);
-    
+
     const result = await adminLogin(formData);
-    
+
     if (!result.success) {
       console.error("Admin login failed:", result.error);
-      // Error is already handled in context and displayed below
+      showError(result.error || "Login failed. Please try again.");
     }
   };
 
@@ -47,12 +47,11 @@ export function AdminLoginPage() {
               Log in
             </h1>
 
-            {/* Error message display */}
-            {error && (
+            {/* {error && (
               <div className="w-full mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
                 <p className="text-red-600 text-sm text-center">{error}</p>
               </div>
-            )}
+            )} */}
 
             <form
               onSubmit={handleSubmit}
@@ -104,5 +103,3 @@ export function AdminLoginPage() {
     </>
   );
 }
-
-
