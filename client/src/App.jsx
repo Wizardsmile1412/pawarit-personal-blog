@@ -15,6 +15,7 @@ import {
   CreateArticle,
   CategoryManagement,
   CreateCategory,
+  EditCategory,
 } from "./pages/AdminPages/ArticleManagement";
 import { AdminProfileManagement } from "./pages/AdminPages/AdminProfilePage";
 import { NotificationPage } from "./pages/AdminPages/NotificationPage";
@@ -137,6 +138,14 @@ function App() {
             element={
               <AdminProtectedRoute>
                 <CreateCategory />
+              </AdminProtectedRoute>
+            }
+          />
+          <Route
+            path="/edit-category/:categoryId"
+            element={
+              <AdminProtectedRoute>
+                <EditCategory />
               </AdminProtectedRoute>
             }
           />

@@ -92,7 +92,7 @@ export function AdminLoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="mt-2 py-3 px-10 bg-[#26231E] text-white font-medium rounded-full w-fit self-center hover:bg-[#3a3630] transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#26231E]"
+                className="mt-2 py-3 px-10 bg-[#26231E] text-white font-medium rounded-full w-fit self-center hover:bg-[#3a3630] hover:cursor-pointer transition-colors disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-[#26231E]"
               >
                 {loading ? "Logging in..." : "Log in"}
               </button>

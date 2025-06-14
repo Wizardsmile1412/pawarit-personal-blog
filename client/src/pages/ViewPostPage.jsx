@@ -74,7 +74,7 @@ const LoginDialog = ({ isOpen, onClose }) => {
 
 function ViewPostPage() {
   const [postInfo, setPostInfo] = useState({});
-  const { postId } = useParams(); // Get "id" from URL
+  const { postId } = useParams();
   const [loginDialogOpen, setLoginDialogOpen] = useState(false);
   // Assume user is not logged in
   const isLoggedIn = false;

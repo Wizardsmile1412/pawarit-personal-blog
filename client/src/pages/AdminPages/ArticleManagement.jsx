@@ -1,5 +1,7 @@
 import { useEffect, useState, useMemo, useRef } from "react";
+import axiosInstance from "@/api/axiosInstance";
 import axios from "axios";
+import { useParams, useNavigate } from "react-router-dom";
 import { debounce } from "lodash";
 import {
   Select,
@@ -10,7 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Search, Edit, Trash2, PlusCircle, ChevronDown } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useToast } from "@/hooks/useToast";
 import AdminSidebar from "@/components/websection/AdminSidebar";
 
 export function ArticleManagement() {
@@ -49,7 +51,6 @@ export function ArticleManagement() {
         { params }
       );
 
-      console.log(response.data);
       setArticles(response.data.posts);
       setTotalPages(response.data.totalPages);
       setCurrentPage(response.data.currentPage);
@@ -113,7 +114,7 @@ export function ArticleManagement() {
   const handleSearchChange = (e) => {
     const value = e.target.value;
     setSearchTerm(value);
-    setSearchCurrentPage(1); 
+    setSearchCurrentPage(1);
     searchArticles(value, 1, selectedCategory);
   };
 
@@ -165,8 +166,6 @@ export function ArticleManagement() {
     ? searchCurrentPage
     : currentPage;
   const displayTotalPages = searchTerm.trim() ? searchTotalPages : totalPages;
-
-  console.log(articlesToDisplay);
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -552,48 +551,79 @@ export function CreateArticle() {
 export function CategoryManagement() {
   const [categories, setCategories] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const [deleteCategoryId, setDeleteCategoryId] = useState(null);
+  const { showError, showSuccess } = useToast();
   const navigate = useNavigate();
 
-  // const getCategories = async () => {
-  //   try {
-  //     const response = await axios.get(
-  //       "https://blog-post-project-api.vercel.app/categories"
-  //     );
-  //     console.log(response.data);
-  //     setCategories(response.data.categories || []);
-  //   } catch (error) {
-  //     console.error("Error fetching categories:", error);
-  //   }
-  // };
+  const getCategories = async () => {
+    try {
+      const response = await axiosInstance.get("/admin/categories");
+      setCategories(response.data || []);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+    }
+  };
 
   useEffect(() => {
-    // getCategories();
-    // Mock data for demonstration
-    const mockData = [
-      { id: 1, name: "Technology" },
-      { id: 2, name: "Health" },
-      { id: 3, name: "Business" },
-      { id: 4, name: "Science" },
-    ];
-    setCategories(mockData);
+    getCategories();
   }, []);
 
-  // const handleDeleteCategory = async (id) => {
-  //   try {
-  //     await axios.delete(`https://blog-post-project-api.vercel.app/categories/${id}`);
-  //     getCategories(); // Refresh the categories list
-  //   } catch (error) {
-  //     console.error("Error deleting category:", error);
-  //   }
-  // };
-
-  // const handleEditCategory = (id) => {
-  //   navigate(`/edit-category/${id}`);
-  // };
-
-  const filteredCategories = categories.filter((category) =>
-    category.name.toLowerCase().includes(searchTerm.toLowerCase())
+  const debouncedSetSearchTerm = useMemo(
+    () =>
+      debounce((value) => {
+        setDebouncedSearchTerm(value);
+      }, 300),
+    []
   );
+
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    debouncedSetSearchTerm(value);
+  };
+
+  useEffect(() => {
+    return () => {
+      debouncedSetSearchTerm.cancel();
+    };
+  }, [debouncedSetSearchTerm]);
+
+  const handleDeleteModal = (categoryId) => {
+    setShowModal(!showModal);
+    setDeleteCategoryId(categoryId);
+  };
+
+  const handleCancel = () => {
+    setShowModal(false);
+  };
+
+  const handleDeleteCategory = async (id) => {
+    try {
+      await axiosInstance.delete(`/admin/categories/${id}`);
+
+      setShowModal(false);
+      getCategories();
+      showSuccess("Category deleted successfully");
+      setDeleteCategoryId(null);
+    } catch (error) {
+      console.error("Error deleting category:", error);
+      showError(error.response?.data?.message || "Failed to delete category");
+    }
+  };
+
+  const handleEditCategory = (categoryId) => {
+    navigate(`/edit-category/${categoryId}`);
+  };
+
+  const filteredCategories = useMemo(() => {
+    if (!debouncedSearchTerm) return categories;
+
+    return categories.filter((category) =>
+      category.name.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
+    );
+  }, [categories, debouncedSearchTerm]);
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -601,8 +631,8 @@ export function CategoryManagement() {
 
       {/* Main Content */}
       <div className="flex-1">
-        <header className="bg-white border-b border-gray-200 py-6 px-20 flex flex-row justify-between">
-          <h1 className="text-2xl font-bold text-gray-800 inline-block">
+        <header className="bg-white border-b border-gray-200 py-6 px-20 flex flex-row justify-between items-center">
+          <h1 className="text-2xl font-bold text-gray-800">
             Category management
           </h1>
           <button
@@ -620,7 +650,7 @@ export function CategoryManagement() {
               type="text"
               placeholder="Search..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={handleSearchChange}
               className="w-full pl-10 pr-4 py-2 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-200"
             />
             <Search
@@ -646,14 +676,14 @@ export function CategoryManagement() {
                 </div>
                 <div className="col-span-2 flex justify-end items-center">
                   <button
-                    className="p-1 text-gray-400 hover:text-gray-600"
-                    // onClick={() => handleEditCategory(category.id)}
+                    className="p-1 text-gray-400 hover:text-gray-600 hover:cursor-pointer"
+                    onClick={() => handleEditCategory(category.id)}
                   >
                     <Edit size={18} />
                   </button>
                   <button
-                    className="p-1 ml-2 text-gray-400 hover:text-gray-600"
-                    // onClick={() => handleDeleteCategory(category.id)}
+                    className="p-1 ml-2 text-gray-400 hover:text-gray-600 hover:cursor-pointer"
+                    onClick={() => handleDeleteModal(category.id)}
                   >
                     <Trash2 size={18} />
                   </button>
@@ -669,40 +699,190 @@ export function CategoryManagement() {
           </div>
         </div>
       </div>
+
+      {/* Delete Category Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-[var(--color-brown-100)] flex flex-col rounded-xl pt-4 pb-10 px-6 shadow-lg w-[480px] text-center">
+            <div className="flex justify-end">
+              <button
+                onClick={handleCancel}
+                className="text-[var(--color-brown-600)] text-2xl hover:text-gray-600 hover:cursor-pointer"
+              >
+                &times;
+              </button>
+            </div>
+            <div className="flex flex-col items-center gap-6">
+              <h3 className="text-2xl font-semibold text-[var(--color-brown-600)]">
+                Delete category
+              </h3>
+              <p className="text-base text-[var(--color-brown-400)] ">
+                Do you want to delete this category?
+              </p>
+              <div className="flex justify-center gap-2">
+                <button
+                  onClick={handleCancel}
+                  className="bg-white border border-[var(-color--brown-400)] text-[var(-color--brown-600)] py-3 px-10 rounded-full hover:bg-gray-100 hover:cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleDeleteCategory(deleteCategoryId)}
+                  className="bg-[var(--color-brown-600)] text-white py-3 px-10 rounded-full hover:bg-[var(--color-brown-400)] hover:cursor-pointer"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function EditCategory() {
+  const { categoryId } = useParams();
+  const [categoryName, setCategoryName] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const navigate = useNavigate();
+
+  const { showError, showSuccess } = useToast();
+
+  const getCategory = async () => {
+    try {
+      setIsLoading(true);
+      const response = await axiosInstance.get(
+        `/admin/categories/${categoryId}`
+      );
+      setCategoryName(response.data.name || "");
+    } catch (error) {
+      console.error("Error fetching category:", error);
+      showError(error.response?.data?.message || "Failed to fetch category");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (categoryId) {
+      getCategory();
+    }
+  }, [categoryId]);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    if (!categoryName.trim()) {
+      showError("Category name is required");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      await axiosInstance.put(`/admin/categories/${categoryId}`, {
+        name: categoryName.trim(),
+      });
+
+      showSuccess("Category updated successfully");
+      navigate("/category-management");
+      setCategoryName("");
+    } catch (error) {
+      console.error("Error editing category:", error);
+      showError(error.response?.data?.message || "Failed to edit category");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen bg-gray-100">
+        <AdminSidebar />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-gray-600">Loading category...</div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex min-h-screen bg-gray-100">
+      <AdminSidebar />
+
+      {/* Main Content */}
+      <div className="flex-1">
+        <header className="bg-white border-b border-gray-200 py-6 px-20 flex flex-row justify-between">
+          <h1 className="text-2xl font-bold text-gray-800 inline-block">
+            Edit category
+          </h1>
+          <button
+            onClick={handleSubmit}
+            disabled={isSubmitting || isLoading}
+            className="bg-gray-900 text-white px-8 py-2 rounded-full shadow-md hover:bg-gray-800 hover:cursor-pointer disabled:bg-gray-400 disabled:cursor-not-allowed"
+          >
+            {isSubmitting ? "Saving..." : "Save"}
+          </button>
+        </header>
+
+        <div className="px-20 py-10 w-130">
+          <form onSubmit={handleSubmit}>
+            <div className="mb-6">
+              <label
+                htmlFor="categoryName"
+                className="block text-gray-700 mb-3"
+              >
+                Category name
+              </label>
+              <input
+                id="categoryName"
+                type="text"
+                placeholder="Enter category name"
+                value={categoryName}
+                onChange={(e) => setCategoryName(e.target.value)}
+                disabled={isLoading}
+                className="w-full px-4 py-2 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-200 disabled:bg-gray-100 disabled:cursor-not-allowed"
+              />
+            </div>
+          </form>
+        </div>
+      </div>
     </div>
   );
 }
 
 export function CreateCategory() {
   const [categoryName, setCategoryName] = useState("");
-  // const [isSubmitting, setIsSubmitting] = useState(false);
-  // const [error, setError] = useState("");
-  // const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const navigate = useNavigate();
+  const { showError, showSuccess } = useToast();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // if (!categoryName.trim()) {
-    //   setError("Category name is required");
-    //   return;
-    // }
+    if (!categoryName.trim()) {
+      showError("Category name is required");
+      return;
+    }
 
-    // setIsSubmitting(true);
-    // setError("");
+    setIsSubmitting(true);
 
-    // try {
-    //   await axios.post("https://blog-post-project-api.vercel.app/categories", {
-    //     name: categoryName.trim()
-    //   });
+    try {
+      await axiosInstance.post("/admin/categories", {
+        name: categoryName.trim(),
+      });
 
-    //   // Navigate back to category management page after successful creation
-    //   navigate("/category-management");
-    // } catch (error) {
-    //   console.error("Error creating category:", error);
-    //   setError(error.response?.data?.message || "Failed to create category");
-    // } finally {
-    //   setIsSubmitting(false);
-    // }
+      navigate("/category-management");
+      showSuccess("Category created successfully");
+      setCategoryName("");
+    } catch (error) {
+      console.error("Error creating category:", error);
+      showError(error.response?.data?.message || "Failed to create category");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -717,8 +897,8 @@ export function CreateCategory() {
           </h1>
           <button
             onClick={handleSubmit}
-            // disabled={isSubmitting}
-            className="bg-gray-900 text-white px-8 py-2 rounded-full shadow-md hover:bg-gray-800 disabled:bg-gray-400 disabled:cursor-not-allowed"
+            disabled={isSubmitting}
+            className="bg-gray-900 text-white px-8 py-2 rounded-full shadow-md hover:bg-gray-800 hover:cursor-pointer disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
             Save
           </button>
@@ -741,9 +921,6 @@ export function CreateCategory() {
                 onChange={(e) => setCategoryName(e.target.value)}
                 className="w-full px-4 py-2 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-200"
               />
-              {/* {error && (
-                <p className="mt-2 text-red-600 text-sm">{error}</p>
-              )} */}
             </div>
           </form>
         </div>
