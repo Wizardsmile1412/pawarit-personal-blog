@@ -10,7 +10,6 @@ export const ToastProvider = ({ children }) => {
 
     setToasts((prev) => [...prev, newToast]);
 
-    // Auto remove after duration
     if (duration > 0) {
       setTimeout(() => {
         removeToast(id);
@@ -22,12 +21,40 @@ export const ToastProvider = ({ children }) => {
     setToasts((prev) => prev.filter((toast) => toast.id !== id));
   };
 
-  const showError = (title, message, duration = 5000) => {
-    addToast({ type: "error", title, message, duration });
+  const showError = (titleOrMessage, message, duration = 5000) => {
+    if (message === undefined) {
+      addToast({
+        type: "error",
+        title: "Error",
+        message: titleOrMessage,
+        duration,
+      });
+    } else {
+      addToast({
+        type: "error",
+        title: titleOrMessage,
+        message,
+        duration,
+      });
+    }
   };
 
-  const showSuccess = (title, message, duration = 5000) => {
-    addToast({ type: "success", title, message, duration });
+  const showSuccess = (titleOrMessage, message, duration = 5000) => {
+    if (message === undefined) {
+      addToast({
+        type: "success",
+        title: "Success",
+        message: titleOrMessage,
+        duration,
+      });
+    } else {
+      addToast({
+        type: "success",
+        title: titleOrMessage,
+        message,
+        duration,
+      });
+    }
   };
 
   const value = {

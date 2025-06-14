@@ -93,7 +93,7 @@ export default function AdminSidebar() {
   ];
 
   return (
-    <div className="w-64 max-h-screen bg-white border-r border-gray-200">
+    <div className="w-[280px] max-h-screen bg-[var(--color-brown-200)] border-r border-gray-200">
       <div className="p-6 flex flex-col">
         <button
           onClick={() => navigate("/")}

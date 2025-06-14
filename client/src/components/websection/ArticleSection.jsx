@@ -219,9 +219,9 @@ function ArticleSection() {
 
           {/* Dropdown for Mobile */}
           <div className="w-full flex flex-col gap-1 mt-4 sm:hidden">
-            <p1 className="body-1 !text-[var(--color-brown-400)] sm:hidden">
+            <p className="body-1 !text-[var(--color-brown-400)] sm:hidden">
               Category
-            </p1>
+            </p>
             <Select
               value={selectedCategory}
               onValueChange={setSelectedCategory}

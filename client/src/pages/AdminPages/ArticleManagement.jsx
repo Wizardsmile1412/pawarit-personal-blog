@@ -168,12 +168,12 @@ export function ArticleManagement() {
   const displayTotalPages = searchTerm.trim() ? searchTotalPages : totalPages;
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="flex min-h-screen bg-[var(--color-background)]">
       <AdminSidebar />
 
       {/* Main Content */}
       <div className="flex-1">
-        <header className="bg-white border-b border-gray-200 py-6 px-20 flex flex-row justify-between items-center">
+        <header className="bg-[var(--color-background)] border-b border-gray-200 py-6 px-20 flex flex-row justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-800">
             Article management
           </h1>
@@ -626,12 +626,12 @@ export function CategoryManagement() {
   }, [categories, debouncedSearchTerm]);
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="flex min-h-screen bg-[var(--color-background)]">
       <AdminSidebar />
 
       {/* Main Content */}
       <div className="flex-1">
-        <header className="bg-white border-b border-gray-200 py-6 px-20 flex flex-row justify-between items-center">
+        <header className="bg-[var(--color-background)] border-b border-gray-200 py-6 px-20 flex flex-row justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-800">
             Category management
           </h1>

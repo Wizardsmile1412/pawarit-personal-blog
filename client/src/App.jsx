@@ -6,9 +6,9 @@ import ProtectedRoute from "./components/auth/ProtectedRoute";
 import "@/styles/globals.css";
 import LandingPage from "./pages/LandingPage";
 import ViewPostPage from "./pages/ViewPostPage";
-import { SignupPage, RegisterSuccess } from "./pages/SignupPage";
-import LoginPage from "./pages/LoginPage";
-import { ProfilePage, ResetPasswordPage } from "./pages/MemberManagement";
+import { SignupPage, RegisterSuccess } from "./pages/Auth/SignupPage";
+import LoginPage from "./pages/Auth/LoginPage";
+import { ProfilePage, ResetPasswordPage } from "./pages/Auth/MemberManagement";
 import { AdminLoginPage } from "./pages/AdminPages/AdminLoginPage";
 import {
   ArticleManagement,

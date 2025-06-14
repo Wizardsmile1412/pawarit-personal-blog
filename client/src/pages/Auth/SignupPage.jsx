@@ -1,4 +1,4 @@
-import { Navbar } from "../components/websection/Navbar";
+import { Navbar } from "@/components/websection/Navbar";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthenticationContext";

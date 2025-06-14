@@ -16,8 +16,7 @@ const AdminProtectedRoute = ({ children }) => {
     );
   }
 
-  // Redirect to admin login if not authenticated
-  return admin ? children : <Navigate to="/admin/login" replace />;
+  return admin ? children : <Navigate to="/admin-login" replace />;
 };
 
 export default AdminProtectedRoute;
