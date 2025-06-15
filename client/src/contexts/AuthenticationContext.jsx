@@ -104,7 +104,6 @@ function AuthProvider(props) {
         "/auth/reset-password",
         passwordData
       );
-      console.log("Password change response:", response);
       setState((prevState) => ({
         ...prevState,
         loading: false,

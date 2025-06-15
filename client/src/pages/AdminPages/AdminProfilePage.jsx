@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import AdminSidebar from "@/components/websection/AdminSidebar";
-import axiosInstance from "@/api/axiosInstance";
+import { useAdminAuth } from "@/contexts/AdminAuthContext";
 import logo from "@/assets/logo.png";
 import { useToast } from "@/hooks/useToast";
 
@@ -15,29 +15,43 @@ export function AdminProfileManagement() {
   });
   const [profilePicture, setProfilePicture] = useState("");
   const [characterCount, setCharacterCount] = useState(0);
-  const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const { showError, showSuccess } = useToast();
   const [errors, setErrors] = useState({});
   const fileInputRef = useRef(null);
 
-  const getAdminProfile = async () => {
-    try {
-      const response = await axiosInstance.get("/admin/profile");
-      const userData = response.data.user;
+  const {
+    getAdminProfile,
+    updateAdminProfile,
+    uploadProfilePicture,
+    loading,
+    profileLoading,
+    profile,
+  } = useAdminAuth();
 
+  const fetchProfileData = async () => {
+    const result = await getAdminProfile();
+    if (result.success) {
+      const userData = result.profile;
       setProfileData({ ...userData });
       setProfilePicture(userData.profile_pic || logo);
       setCharacterCount(userData.bio ? userData.bio.length : 0);
-    } catch (error) {
-      console.error("Error fetching admin profile:", error);
-      showError("Failed to fetch profile data");
+    } else if (result.error) {
+      showError(result.error);
     }
   };
 
   useEffect(() => {
-    getAdminProfile();
+    fetchProfileData();
   }, []);
+
+  useEffect(() => {
+    if (profile) {
+      setProfileData({ ...profile });
+      setProfilePicture(profile.profile_pic || logo);
+      setCharacterCount(profile.bio ? profile.bio.length : 0);
+    }
+  }, [profile]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -84,27 +98,16 @@ export function AdminProfileManagement() {
       const formData = new FormData();
       formData.append("profilePic", file);
 
-      const response = await axiosInstance.post(
-        "/admin/upload-profile-pic",
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
-      );
+      const result = await uploadProfilePicture(formData);
 
-      if (response.data.user) {
-        // Update profile data with new information
-        setProfileData(response.data.user);
-        setProfilePicture(response.data.user.profile_pic);
+      if (result.success) {
         showSuccess("Profile picture updated successfully!");
+      } else if (result.error) {
+        setErrors({ ...errors, profilePic: result.error });
       }
     } catch (error) {
       console.error("Error uploading profile picture:", error);
-      const errorMessage =
-        error.response?.data?.error || "Failed to upload profile picture";
-      setErrors({ ...errors, profilePic: errorMessage });
+      setErrors({ ...errors, profilePic: "Failed to upload profile picture" });
     } finally {
       setIsUploading(false);
     }
@@ -134,7 +137,6 @@ export function AdminProfileManagement() {
       newErrors.bio = "Bio must be 120 characters or less";
     }
 
-    // Fix: Set errors state instead of calling showError with object
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -146,39 +148,43 @@ export function AdminProfileManagement() {
       return;
     }
 
-    setIsLoading(true);
     setErrors({});
 
     try {
-      const response = await axiosInstance.put("/admin/update-profile", {
+      const result = await updateAdminProfile({
         name: profileData.name.trim(),
         username: profileData.username.trim(),
         email: profileData.email.trim(),
         bio: profileData.bio ? profileData.bio.trim() : "",
       });
 
-      if (response.data.user) {
-        setProfileData(response.data.user);
-        showSuccess("Profile updated successfully!");
+      if (result.success) {
+        showSuccess(result.message || "Profile updated successfully!");
+      } else if (result.error) {
+        if (result.error.includes("username")) {
+          setErrors({ username: result.error });
+        } else if (result.error.includes("email")) {
+          setErrors({ email: result.error });
+        } else {
+          showError(result.error);
+        }
       }
     } catch (error) {
       console.error("Error updating profile:", error);
-      const errorMessage =
-        error.response?.data?.error || "Failed to update profile";
-
-      // Handle specific field errors
-      if (errorMessage.includes("username")) {
-        setErrors({ username: errorMessage });
-      } else if (errorMessage.includes("email")) {
-        setErrors({ email: errorMessage });
-      } else {
-        // Fix: Show general error message instead of passing object
-        showError(errorMessage);
-      }
-    } finally {
-      setIsLoading(false);
+      showError("Failed to update profile");
     }
   };
+
+  if (profileLoading) {
+    return (
+      <div className="flex min-h-screen bg-[var(--color-background)]">
+        <AdminSidebar />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-gray-600">Loading profile...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen bg-[var(--color-background)]">
@@ -190,14 +196,14 @@ export function AdminProfileManagement() {
           <h1 className="text-2xl font-bold text-gray-800">Profile</h1>
           <button
             onClick={handleSubmit}
-            disabled={isLoading}
+            disabled={loading}
             className={`px-8 py-2 rounded-full shadow-md text-white ${
-              isLoading
+              loading
                 ? "bg-gray-400 cursor-not-allowed"
                 : "bg-gray-900 hover:bg-gray-800 hover:cursor-pointer"
             }`}
           >
-            {isLoading ? "Saving..." : "Save"}
+            {loading ? "Saving..." : "Save"}
           </button>
         </header>
 
@@ -224,9 +230,9 @@ export function AdminProfileManagement() {
                 <button
                   type="button"
                   onClick={handleProfilePictureClick}
-                  disabled={isUploading}
+                  disabled={isUploading || loading}
                   className={`border border-gray-300 rounded-full px-6 py-3 text-black ${
-                    isUploading
+                    isUploading || loading
                       ? "bg-gray-100 cursor-not-allowed"
                       : "bg-white hover:bg-gray-50 hover:cursor-pointer"
                   }`}
@@ -262,9 +268,10 @@ export function AdminProfileManagement() {
                   type="text"
                   value={profileData.name}
                   onChange={handleInputChange}
+                  disabled={loading}
                   className={`w-full px-4 py-2 bg-white border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-200 ${
                     errors.name ? "border-red-500" : "border-gray-300"
-                  }`}
+                  } ${loading ? "bg-gray-100 cursor-not-allowed" : ""}`}
                 />
                 {errors.name && (
                   <p className="text-red-500 text-sm mt-1">{errors.name}</p>
@@ -282,9 +289,10 @@ export function AdminProfileManagement() {
                   type="text"
                   value={profileData.username}
                   onChange={handleInputChange}
+                  disabled={loading}
                   className={`w-full px-4 py-2 bg-white border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-200 ${
                     errors.username ? "border-red-500" : "border-gray-300"
-                  }`}
+                  } ${loading ? "bg-gray-100 cursor-not-allowed" : ""}`}
                 />
                 {errors.username && (
                   <p className="text-red-500 text-sm mt-1">{errors.username}</p>
@@ -302,9 +310,10 @@ export function AdminProfileManagement() {
                   type="email"
                   value={profileData.email}
                   onChange={handleInputChange}
+                  disabled={loading}
                   className={`w-full px-4 py-2 bg-white border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-200 ${
                     errors.email ? "border-red-500" : "border-gray-300"
-                  }`}
+                  } ${loading ? "bg-gray-100 cursor-not-allowed" : ""}`}
                 />
                 {errors.email && (
                   <p className="text-red-500 text-sm mt-1">{errors.email}</p>
@@ -323,9 +332,10 @@ export function AdminProfileManagement() {
                   onChange={handleInputChange}
                   maxLength={120}
                   rows={4}
+                  disabled={loading}
                   className={`w-full px-4 py-2 bg-white border rounded-md focus:outline-none focus:ring-2 focus:ring-gray-200 resize-none ${
                     errors.bio ? "border-red-500" : "border-gray-300"
-                  }`}
+                  } ${loading ? "bg-gray-100 cursor-not-allowed" : ""}`}
                 />
                 <div className="flex justify-between items-center mt-1">
                   {errors.bio && (

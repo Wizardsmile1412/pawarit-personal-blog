@@ -1,10 +1,12 @@
 import logo from "@/assets/logo.png";
 import { useLocation, useNavigate } from "react-router-dom";
+import { useAdminAuth } from "@/contexts/AdminAuthContext";
 
 export default function AdminSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   const currentPath = location.pathname;
+  const { adminLogout } = useAdminAuth();
 
   // Menu items array for easier management
   const menuItems = [
@@ -92,8 +94,12 @@ export default function AdminSidebar() {
     },
   ];
 
+  const handleLogout = () => {
+    adminLogout();
+  };
+
   return (
-    <div className="w-[280px] max-h-screen bg-[var(--color-brown-200)] border-r border-gray-200">
+    <div className="w-[280px] bg-[var(--color-brown-200)] border-r border-gray-200 relative">
       <div className="p-6 flex flex-col">
         <button
           onClick={() => navigate("/")}
@@ -104,7 +110,7 @@ export default function AdminSidebar() {
         <div className="text-orange-400 text-lg mt-0.5 ml-1">Admin panel</div>
       </div>
 
-      <nav className="mt-6">
+      <nav className="mt-6 pb-32">
         {menuItems.map((item) => (
           <div
             key={item.path}
@@ -123,21 +129,21 @@ export default function AdminSidebar() {
         ))}
       </nav>
 
-      <div className="absolute bottom-0 w-64 border-t border-gray-200">
-        <a
+      {/* Fixed bottom section */}
+      <div className="fixed bottom-0 w-[280px] border-t border-gray-200 bg-[var(--color-brown-200)]">
+        <button
           onClick={() => navigate("/")}
-          className="flex items-center px-4 py-2 text-gray-500 hover:bg-gray-100 cursor-pointer"
+          className="flex w-full items-center px-4 py-2 text-gray-500 hover:bg-gray-100 cursor-pointer"
         >
           <img src={logo} alt="logo" className="w-10 h-10 mr-1" />
-          hh. website
-        </a>
+          Wizardsmile
+        </button>
 
-        <a
+        <button
           onClick={() => {
-            // Add logout functionality here
-            navigate("/admin-login");
+            handleLogout();
           }}
-          className="flex items-center px-6 py-4 mb-1 text-gray-500 hover:bg-gray-100 cursor-pointer"
+          className="flex items-center w-full px-6 py-4 mb-1 text-gray-500 hover:bg-gray-100 cursor-pointer"
         >
           <svg
             className="w-5 h-5 mr-3"
@@ -151,7 +157,7 @@ export default function AdminSidebar() {
             <line x1="21" y1="12" x2="9" y2="12" />
           </svg>
           Log out
-        </a>
+        </button>
       </div>
     </div>
   );

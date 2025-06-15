@@ -334,4 +334,48 @@ adminRouter.put("/update-profile", protectAdmin, async (req, res) => {
   }
 });
 
+adminRouter.put("/reset-password", protectAdmin, async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+
+  if (!currentPassword || !newPassword) {
+    return res.status(400).json({
+      error: "Current password and new password are required",
+    });
+  }
+
+  if (newPassword.length < 6) {
+    return res.status(400).json({
+      error: "New password must be at least 6 characters long",
+    });
+  }
+
+  try {
+    const { data: loginData, error: loginError } =
+      await supabase.auth.signInWithPassword({
+        email: req.user.email,
+        password: currentPassword,
+      });
+
+    if (loginError) {
+      return res.status(400).json({ error: "Invalid current password" });
+    }
+
+    const { data, error } = await supabase.auth.admin.updateUserById(
+      req.user.id,
+      { password: newPassword }
+    );
+
+    if (error) {
+      return res.status(400).json({ error: error.message });
+    }
+
+    res.status(200).json({
+      message: "Password updated successfully",
+      user: data.user,
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 export default adminRouter;

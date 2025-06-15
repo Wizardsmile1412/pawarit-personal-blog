@@ -1,20 +1,18 @@
-import AdminSidebar from "@/components/websection/AdminSidebar";
 import { useState } from "react";
+import { useAdminAuth } from "@/contexts/AdminAuthContext";
+import AdminSidebar from "@/components/websection/AdminSidebar";
+import { useToast } from "@/hooks/useToast";
 
 export function AdminResetPasswordPage() {
-  // State for form fields
   const [formData, setFormData] = useState({
     currentPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
-
-  // State for form submission and errors
+  const { resetPassword } = useAdminAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(false);
+  const { showError, showSuccess } = useToast();
 
-  // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prevData) => ({
@@ -23,74 +21,76 @@ export function AdminResetPasswordPage() {
     }));
   };
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
 
-    // Basic validation
     if (
       !formData.currentPassword ||
       !formData.newPassword ||
       !formData.confirmPassword
     ) {
-      setError("All fields are required");
+      showError("All fields are required");
       return;
     }
 
     if (formData.newPassword !== formData.confirmPassword) {
-      setError("New passwords don't match");
+      showError("New passwords don't match");
+      return;
+    }
+
+    if (formData.newPassword.length < 6) {
+      showError("New password must be at least 6 characters long");
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      // Mock API call - replace with actual API integration
-      // const response = await apiClient.post('/reset-password', formData);
-
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Set success state
-      setSuccess(true);
-
-      // Reset form after successful submission
-      setFormData({
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
+      const result = await resetPassword({
+        currentPassword: formData.currentPassword,
+        newPassword: formData.newPassword,
       });
 
-      // Clear success message after 3 seconds
-      setTimeout(() => {
-        setSuccess(false);
-      }, 3000);
+      if (result.success) {
+        showSuccess(result.message || "Password reset successfully!");
+
+        setFormData({
+          currentPassword: "",
+          newPassword: "",
+          confirmPassword: "",
+        });
+
+      } else if (result.error) {
+        showError(result.error);
+      }
     } catch (err) {
-      // Handle API errors
-      setError(err.message || "Failed to reset password. Please try again.");
+      // Handle unexpected errors
+      const errorMessage =
+        err.message || "Failed to reset password. Please try again.";
+      showError(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="flex min-h-screen bg-[var(--color-background)]">
       <AdminSidebar />
 
       {/* Main Content */}
       <div className="flex-1">
-        <header className="bg-white border-b border-gray-200 py-6 px-20 flex flex-row justify-between">
+        <header className="bg-[var(--color-background)] border-b border-gray-200 py-6 px-20 flex flex-row justify-between items-center">
           <h1 className="text-2xl font-bold text-gray-800">Reset password</h1>
           {/* Reset Button */}
           <div className="flex justify-end">
             <button
-              type="submit"
+              type="button"
+              onClick={handleSubmit}
               disabled={isSubmitting}
-              className={`bg-gray-900 text-white px-8 py-2 rounded-full shadow-md ${
+              className={`bg-gray-900 text-white px-8 py-2 rounded-full shadow-md transition-colors ${
                 isSubmitting
                   ? "opacity-70 cursor-not-allowed"
-                  : "hover:bg-gray-800"
+                  : "hover:bg-gray-800 hover:cursor-pointer"
               }`}
             >
               {isSubmitting ? "Resetting..." : "Reset password"}
@@ -98,10 +98,15 @@ export function AdminResetPasswordPage() {
           </div>
         </header>
 
-        <div className="px-20 py-6">
-          <form onSubmit={handleSubmit} className="w-120">
+        <div className="px-20 pt-10 pb-30">
+          {/* Success Message */}
+
+          <form
+            onSubmit={handleSubmit}
+            className="w-120 flex flex-col gap-[28px]"
+          >
             {/* Current Password Field */}
-            <div className="mb-6">
+            <div className="flex flex-col gap-1">
               <label className="block text-gray-700 mb-2">
                 Current password
               </label>
@@ -112,11 +117,12 @@ export function AdminResetPasswordPage() {
                 onChange={handleChange}
                 className="w-full px-4 py-3 bg-white border border-gray-300 rounded-2xl focus:outline-none focus:ring-2 focus:ring-gray-200"
                 placeholder="Current password"
+                disabled={isSubmitting}
               />
             </div>
 
             {/* New Password Field */}
-            <div className="mb-6">
+            <div className="flex flex-col gap-1">
               <label className="block text-gray-700 mb-2">New password</label>
               <input
                 type="password"
@@ -124,12 +130,13 @@ export function AdminResetPasswordPage() {
                 value={formData.newPassword}
                 onChange={handleChange}
                 className="w-full px-4 py-3 border border-gray-300 bg-white rounded-2xl focus:outline-none focus:ring-2 focus:ring-gray-200"
-                placeholder="New password"
+                placeholder="New password (minimum 6 characters)"
+                disabled={isSubmitting}
               />
             </div>
 
             {/* Confirm New Password Field */}
-            <div className="mb-6">
+            <div className="flex flex-col gap-1">
               <label className="block text-gray-700 mb-2">
                 Confirm new password
               </label>
@@ -140,23 +147,15 @@ export function AdminResetPasswordPage() {
                 onChange={handleChange}
                 className="w-full px-4 py-3 border border-gray-300 bg-white rounded-2xl focus:outline-none focus:ring-2 focus:ring-gray-200"
                 placeholder="Confirm new password"
+                disabled={isSubmitting}
               />
             </div>
+
+            {/* Submit button for form submission (hidden, handled by header button) */}
+            <button type="submit" style={{ display: "none" }}>
+              Submit
+            </button>
           </form>
-
-          {/* Success message */}
-          {success && (
-            <div className="mb-4 p-4 bg-green-100 text-green-700 rounded">
-              Password reset successfully!
-            </div>
-          )}
-
-          {/* Error message */}
-          {error && (
-            <div className="mb-4 p-4 bg-red-100 text-red-700 rounded">
-              {error}
-            </div>
-          )}
         </div>
       </div>
     </div>
