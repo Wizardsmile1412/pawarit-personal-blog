@@ -37,9 +37,9 @@ function BlogCard({ post }) {
         </p>
         <div className="flex items-center text-sm">
           <img
-            className="w-8 h-8 rounded-full mr-2"
-            src="https://res.cloudinary.com/dcbpjtd1r/image/upload/v1728449784/my-blog-post/xgfy0xnvyemkklcqodkg.jpg"
-            alt="Tomson P."
+            className="w-8 h-8 rounded-full object-cover mr-2"
+            src="https://res.cloudinary.com/dr2ijid6r/image/upload/v1750350623/IMG_3367_rukujp.jpg"
+            alt="Pawarit S."
           />
           <span>{post.author}</span>
           <span className="mx-2 text-gray-300">|</span>

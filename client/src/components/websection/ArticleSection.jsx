@@ -9,12 +9,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import axios from "axios";
+import axiosInstance from "@/api/axiosInstance";
 import BlogCard from "./BlogCard";
 import { debounce } from "lodash";
 import { useNavigate } from "react-router-dom";
-
-const categories = ["Highlight", "Cat", "Inspiration", "General"];
 
 function ArticleSection() {
   const [selectedCategory, setSelectedCategory] = useState("Highlight");
@@ -32,33 +30,54 @@ function ArticleSection() {
   const dropdownRef = useRef(null);
   const navigate = useNavigate();
 
+  const [categories, setCategories] = useState(["Highlight"]);
+
+  async function fetchCategories() {
+    try {
+      const response = await axiosInstance.get("/posts/categories");
+      const databaseCategories =
+        response.data.map((category) => category.name) || [];
+      setCategories(["Highlight", ...databaseCategories]);
+    } catch (error) {
+      console.error(`Error fetching categories: ${error}`);
+    }
+  }
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
   async function getArticles(page, category) {
     setLoading(true);
     try {
-      const categoryParam = category === "Highlight" ? "" : category;
+      const params = {
+        page: page,
+        limit: 6,
+      };
 
-      const response = await axios.get(
-        "https://blog-post-project-api.vercel.app/posts",
-        {
-          params: {
-            page: page,
-            limit: 6,
-            category: categoryParam,
-          },
-        }
-      );
-
-      // If it's the first page, replace all posts
-      // Otherwise, append the new posts to the existing ones
-      if (page === 1) {
-        setPosts(response.data.posts);
-      } else {
-        setPosts((prevPosts) => [...prevPosts, ...response.data.posts]);
+      if (category && category !== "Highlight") {
+        params.category = category;
       }
 
-      setTotalPages(response.data.totalPages);
+      const response = await axiosInstance.get("/posts", { params });
+
+      console.log("get articles:", response.data);
+
+      const responseData = response.data;
+      const postsArray = responseData.posts || [];
+
+      if (page === 1) {
+        setPosts(postsArray);
+      } else {
+        setPosts((prevPosts) => [...prevPosts, ...postsArray]);
+      }
+
+      setTotalPages(responseData.totalPages || 0);
     } catch (error) {
       console.error(`Fetching error: ${error}`);
+      if (page === 1) {
+        setPosts([]);
+        setTotalPages(0);
+      }
     } finally {
       setLoading(false);
     }
@@ -95,15 +114,12 @@ function ArticleSection() {
 
         setIsSearching(true);
         try {
-          const response = await axios.get(
-            "https://blog-post-project-api.vercel.app/posts",
-            {
-              params: {
-                keyword: trimmedTerm,
-                limit: 10,
-              },
-            }
-          );
+          const response = await axiosInstance.get("/posts", {
+            params: {
+              keyword: trimmedTerm,
+              limit: 10,
+            },
+          });
           setSearchResults(response.data.posts || []);
         } catch (error) {
           console.error(`Search error: ${error}`);
@@ -149,17 +165,17 @@ function ArticleSection() {
   };
 
   return (
-    <div className="w-full sm:px-20">
-      <div>
-        <h2 className="heading-3 !text-[var(--color-brown-500)] p-4">
+    <div className="w-full sm:px-30 sm:flex sm:flex-col sm:gap-12 sm:mb-25">
+      <div className="flex flex-col sm:gap-8">
+        <h2 className="heading-3 !text-[var(--color-brown-600)] p-4 sm:p-0">
           Latest articles
         </h2>
         {/* Responsive Container */}
-        <div className=" bg-[var(--color-brown-200)] rounded-lg p-4 flex flex-col sm:h-22 sm:flex-row sm:space-y-0 sm:justify-between sm:items-center">
+        <div className=" bg-[var(--color-brown-200)] rounded-lg p-4 flex flex-col sm:h-22 sm:flex-row sm:justify-between sm:items-center sm:py-4 sm:px-6">
           {/* Categories - Buttons on Desktop, Dropdown on Mobile */}
           <div className="w-full sm:w-auto">
             {/* Buttons for Desktop */}
-            <div className="hidden sm:flex space-x-4">
+            <div className="hidden sm:flex space-x-2">
               {categories.map((category) => (
                 <button
                   key={category}
@@ -178,7 +194,7 @@ function ArticleSection() {
           </div>
 
           {/* Search Bar */}
-          <div className="relative w-full sm:w-1/3">
+          <div className="relative w-full sm:w-90 ">
             <Input
               ref={searchInputRef}
               type="text"
@@ -186,9 +202,9 @@ function ArticleSection() {
               value={searchTerm}
               onChange={handleSearchChange}
               onFocus={() => searchTerm && setShowDropdown(true)}
-              className="w-full px-4 py-2 rounded-lg bg-white border border-gray-300 !focus:outline-none !focus:ring-0 !focus:border-transparent"
+              className="w-full h-[48px] !text-[var(--color-brown-400)] px-4 py-2 rounded-lg bg-white border border-brown-300 !focus:outline-none !focus:ring-0 !focus:border-transparent"
             />
-            <IoSearch className="absolute right-3 top-3 text-gray-400" />
+            <IoSearch className="absolute w-5 h-5 right-4 top-4 text-[var(--color-brown-400)]" />
 
             {/* Autocomplete Dropdown */}
             {showDropdown && (
@@ -227,7 +243,7 @@ function ArticleSection() {
               onValueChange={setSelectedCategory}
               className="block"
             >
-              <SelectTrigger className="w-full sm:hidden bg-white text-gray-500">
+              <SelectTrigger className="w-full !h-12 py-3 pr-3 pl-4 border border-[var-(--color-brown-300)] sm:hidden bg-white !text-[var(--color-brown-400)]">
                 <SelectValue placeholder="Highlight" />
               </SelectTrigger>
               <SelectContent>
@@ -247,13 +263,13 @@ function ArticleSection() {
       {/* Blog Card */}
       <div className="grid grid-cols-1 gap-12 pt-6 pb-20 px-4 md:grid-cols-2 md:p-0">
         {posts.length === 0 && !isLoading ? (
-          <p className="text-[var(--color-gray-600)]  text-center col-span-2 text-2xl">
+          <p className="text-[var(--color-gray-600)] text-center col-span-2 text-2xl my-5">
             No articles found in this category.
           </p>
         ) : (
           posts.map((item, index) => <BlogCard key={index} post={item} />)
         )}
-
+        {/* ViewMore Mobile*/}
         {currentPage < totalPages && (
           <div className="flex flex-row justify-center mt-9 mb-4 md:hidden">
             <button
@@ -266,18 +282,18 @@ function ArticleSection() {
           </div>
         )}
       </div>
-
+      {/* ViewMore Desktop*/}
       {currentPage < totalPages && (
-          <div className="hidden md:flex flex-row justify-center mt-20 mb-30">
-            <button
-              className="body-1 !text-[var(--color-brown-600)] h-15 w-40 min-w-40 hover:underline hover:cursor-pointer"
-              onClick={handleViewMore}
-              disabled={isLoading}
-            >
-              {isLoading ? "Loading..." : "View More"}
-            </button>
-          </div>
-        )}
+        <div className="hidden md:flex flex-row justify-center mt-10">
+          <button
+            className="body-1 !text-[var(--color-brown-600)] h-15 w-40 min-w-40 hover:underline hover:cursor-pointer"
+            onClick={handleViewMore}
+            disabled={isLoading}
+          >
+            {isLoading ? "Loading..." : "View More"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }
