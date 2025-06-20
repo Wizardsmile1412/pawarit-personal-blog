@@ -1,14 +1,18 @@
 import ReactMarkdown from "react-markdown";
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import { useAuth } from "@/contexts/AuthenticationContext";
 import axios from "axios";
 import { Heart } from "lucide-react";
+import { useToast } from "@/hooks/useToast";
 import { toast, Toaster } from "sonner";
 import "@/styles/globals.css";
-import { Footer } from "../components/websection/PageContainer";
+import { Footer, LoadingScreen } from "../components/websection/PageContainer";
 import { Navbar } from "../components/websection/Navbar";
 import AuthorSidebar from "@/components/websection/AuthorSidebar";
+import { CommentForm } from "@/components/websection/CommentForm";
 import CommentList from "@/components/websection/CommentList";
+import { formatDate } from "@/utils/dateUtils";
 
 const LoginDialog = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
@@ -76,24 +80,22 @@ function ViewPostPage() {
   const [postInfo, setPostInfo] = useState({});
   const { postId } = useParams();
   const [loginDialogOpen, setLoginDialogOpen] = useState(false);
-  // Assume user is not logged in
-  const isLoggedIn = false;
+  const { state, isAuthenticated } = useAuth();
+  const { showError, showSuccess } = useToast();
+  const [commentTrigger, setCommentTrigger] = useState(0);
 
-  // Handle like button click
   const handleLikeClick = () => {
-    if (!isLoggedIn) {
+    if (!isAuthenticated) {
       setLoginDialogOpen(true);
     }
   };
 
-  // Handle comment focus
   const handleCommentFocus = () => {
-    if (!isLoggedIn) {
+    if (!isAuthenticated) {
       setLoginDialogOpen(true);
     }
   };
 
-  // Handle comment focus
   const handleCopyLink = async () => {
     try {
       // Get the current page URL
@@ -121,7 +123,6 @@ function ViewPostPage() {
     }
   };
 
-  // HandleSocialShare
   const handleSocialShare = (platform) => {
     const currentUrl = window.location.href;
     const encodedUrl = encodeURIComponent(currentUrl);
@@ -151,20 +152,20 @@ function ViewPostPage() {
       const response = await axios.get(
         `https://blog-post-project-api.vercel.app/posts/${postId}`
       );
-
+      console.log("response post:", response.data);
       setPostInfo(response.data);
     } catch (error) {
       console.error("Failed to show content: ", error);
     }
   };
 
+  const handleCommentAdded = () => {
+    setCommentTrigger((prev) => prev + 1);
+  };
+
   useEffect(() => {
     getContents(postId);
   }, [postId]);
-
-  const date = new Date(postInfo.date);
-  const options = { day: "2-digit", month: "long", year: "numeric" };
-  const formattedDate = date.toLocaleDateString("en-GB", options);
 
   return (
     <>
@@ -172,6 +173,9 @@ function ViewPostPage() {
       <Navbar />
 
       <section className="page-container w-full flex flex-col justify-center items-center px-4 sm:px-7 md:px-20">
+        {/* Check loading user authentication */}
+        {state.getUserLoading && <LoadingScreen />}
+
         {/* View Post Page Header */}
         <div className="title-image markdown w-full sm:max-w-[800px] md:max-w-[1000px] lg:max-w-[1200px] h-auto sm:h-[400px] md:h-[500px] lg:h-[587px] overflow-hidden rounded-xl">
           <img
@@ -192,7 +196,7 @@ function ViewPostPage() {
                     {postInfo.category}
                   </span>
                   <span className="text-gray-500 text-sm sm:text-base">
-                    {formattedDate}
+                    {formatDate(postInfo.date)}
                   </span>
                 </div>
                 <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-gray-800 mb-4">
@@ -272,32 +276,19 @@ function ViewPostPage() {
               </div>
 
               {/* Comment Form */}
-              <div className="mb-8 sm:mb-12">
-                <div className="flex flex-col w-full">
-                  <label className="text-gray-600 mb-1 text-sm sm:text-base">
-                    Comment
-                  </label>
-                  <div className="border border-gray-300 rounded-lg p-3 mb-2">
-                    <textarea
-                      className="w-full outline-none text-gray-600 text-sm sm:text-base"
-                      placeholder="What are your thoughts?"
-                      rows={4}
-                      onFocus={handleCommentFocus}
-                    />
-                  </div>
-                  <div className="flex justify-end">
-                    <button
-                      onClick={handleCommentFocus}
-                      className="bg-gray-800 text-white px-8 sm:px-10 py-3 rounded-full text-sm sm:text-base"
-                    >
-                      Send
-                    </button>
-                  </div>
-                </div>
-              </div>
+              <CommentForm
+                handleCommentFocus={handleCommentFocus}
+                showError={showError}
+                showSuccess={showSuccess}
+                postId={postId}
+                onCommentAdded={handleCommentAdded}
+              />
 
               {/* Comment List */}
-              <CommentList />
+              <CommentList
+                postId={postId}
+                commentTrigger={commentTrigger}
+              />
             </div>
           </div>
 

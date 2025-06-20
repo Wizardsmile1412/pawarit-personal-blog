@@ -4,6 +4,7 @@ import cors from "cors";
 import postsRouter from "./routes/postsRoutes.mjs";
 import authRouter from "./routes/authRoutes.mjs";
 import adminRouter from "./routes/adminRoutes.mjs";
+import commentRoutes from "./routes/commentRoutes.mjs"
 import categoriesRouter from "./routes/categoriesRoutes.mjs";
 
 dotenv.config();
@@ -38,6 +39,7 @@ app.use("/auth", authRouter);
 app.use("/posts", postsRouter);
 app.use("/admin", adminRouter);
 app.use("/admin/categories", categoriesRouter);
+app.use("/comments", commentRoutes);
 
 // Simple 404 handler
 app.use((req, res) => {

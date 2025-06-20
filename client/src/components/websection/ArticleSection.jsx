@@ -60,7 +60,6 @@ function ArticleSection() {
 
       const response = await axiosInstance.get("/posts", { params });
 
-      console.log("get articles:", response.data);
 
       const responseData = response.data;
       const postsArray = responseData.posts || [];
