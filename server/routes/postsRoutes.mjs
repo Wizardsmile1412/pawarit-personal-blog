@@ -2,6 +2,7 @@ import express from "express";
 import { createClient } from "@supabase/supabase-js";
 import postValidate from "../middlewares/postValidate.mjs";
 import protectAdmin from "../middlewares/protectAdmin.mjs";
+import protectUser from "../middlewares/protectUser.mjs";
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -15,12 +16,21 @@ postsRouter.get("/", async (req, res) => {
   const limit = parseInt(req.query.limit) || 6;
   const category = req.query.category?.trim();
   const keyword = req.query.keyword?.trim();
+  
+  // Validate page number
+  if (page < 1) {
+    return res.status(400).json({
+      error: "Page number must be greater than 0"
+    });
+  }
+  
   const offset = (page - 1) * limit;
 
   try {
     let query = supabase
       .from("posts")
-      .select(`
+      .select(
+        `
         id,
         image,
         category_id,
@@ -30,7 +40,9 @@ postsRouter.get("/", async (req, res) => {
         content,
         likes_count,
         categories!inner(name)
-      `, { count: "exact" })
+      `,
+        { count: "exact" }
+      )
       .eq("status_id", 2); // Only published posts
 
     if (category && category !== "Highlight") {
@@ -52,21 +64,31 @@ postsRouter.get("/", async (req, res) => {
       });
     }
 
-    // Transform the data to match the expected format
-    const transformedPosts = (data || []).map(post => ({
-      id: post.id,
-      image: post.image,
-      category: post.categories?.name || "General", 
-      title: post.title,
-      description: post.description,
-      author: "Pawarit S.", 
-      date: post.date,
-      likes: post.likes_count || 0,
-      content: post.content
-    }));
-
     const totalPosts = count || 0;
     const totalPages = Math.ceil(totalPosts / limit);
+
+    if (page > totalPages && totalPages > 0) {
+      return res.status(200).json({
+        totalPosts,
+        totalPages,
+        currentPage: page,
+        limit,
+        posts: [],
+        nextPage: null,
+      });
+    }
+
+    const transformedPosts = (data || []).map((post) => ({
+      id: post.id,
+      image: post.image,
+      category: post.categories?.name || "General",
+      title: post.title,
+      description: post.description,
+      author: "Pawarit S.",
+      date: post.date,
+      likes: post.likes_count || 0,
+      content: post.content,
+    }));
 
     return res.status(200).json({
       totalPosts,
@@ -76,7 +98,6 @@ postsRouter.get("/", async (req, res) => {
       posts: transformedPosts,
       nextPage: page < totalPages ? page + 1 : null,
     });
-
   } catch (err) {
     console.error("Server error:", err);
     return res.status(500).json({
@@ -100,7 +121,6 @@ postsRouter.get("/categories", async (req, res) => {
     }
 
     return res.status(200).json(data || []);
-    
   } catch (err) {
     console.error("Server error:", err);
     return res.status(500).json({
@@ -115,13 +135,23 @@ postsRouter.get("/:postId", async (req, res) => {
   try {
     const { data, error } = await supabase
       .from("posts")
-      .select("*")
+      .select(
+        `
+        *, 
+        users (
+      name,
+      profile_pic,
+      bio
+    ), categories (
+    name
+    )
+      `
+      )
       .eq("id", postId)
       .single();
 
     if (error) {
       if (error.code === "PGRST116") {
-        // No rows returned
         return res.status(404).json({
           message: "Server could not find a requested post",
         });
@@ -131,7 +161,6 @@ postsRouter.get("/:postId", async (req, res) => {
         message: "Server could not read post because database connection",
       });
     }
-
     return res.status(200).json(data);
   } catch (err) {
     console.error(err);
@@ -263,6 +292,62 @@ postsRouter.delete("/:postId", [protectAdmin], async (req, res) => {
     console.error(err);
     return res.status(500).json({
       error: "Server could not delete post because database connection",
+    });
+  }
+});
+
+postsRouter.post("/:postId/like", protectUser, async (req, res) => {
+  const { postId } = req.params;
+  const userId = req.user.id;
+
+  try {
+    // Call the database function to handle like/unlike
+    const { data, error } = await supabase.rpc("handle_post_like", {
+      p_post_id: postId,
+      p_user_id: userId,
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    res.json({
+      success: true,
+      ...data,
+    });
+  } catch (error) {
+    console.error("Error handling like:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to process like action",
+      details: error.message,
+    });
+  }
+});
+
+postsRouter.get("/:postId/like-status", protectUser, async (req, res) => {
+  const { postId } = req.params;
+  const userId = req.user.id;
+
+  try {
+    const { data, error } = await supabase.rpc("check_like_status", {
+      p_post_id: postId,
+      p_user_id: userId,
+    });
+
+    if (error) {
+      throw error;
+    }
+
+    res.json({
+      success: true,
+      ...data,
+    });
+  } catch (error) {
+    console.error("Error checking like status:", error);
+    res.status(500).json({
+      success: false,
+      error: "Failed to check like status",
     });
   }
 });

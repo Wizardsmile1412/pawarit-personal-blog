@@ -20,6 +20,7 @@ function ArticleSection() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(0);
   const [isLoading, setLoading] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
   // New states for search functionality
   const [searchTerm, setSearchTerm] = useState("");
@@ -42,12 +43,20 @@ function ArticleSection() {
       console.error(`Error fetching categories: ${error}`);
     }
   }
+
   useEffect(() => {
     fetchCategories();
   }, []);
 
-  async function getArticles(page, category) {
+  async function getArticles(page, category, isLoadMore = false) {
+    // Prevent loading if already loading
+    if (isLoading) {
+      return;
+    }
+
     setLoading(true);
+    setHasError(false);
+
     try {
       const params = {
         page: page,
@@ -59,29 +68,33 @@ function ArticleSection() {
       }
 
       const response = await axiosInstance.get("/posts", { params });
-
-
       const responseData = response.data;
       const postsArray = responseData.posts || [];
 
-      if (page === 1) {
-        setPosts(postsArray);
-      } else {
+      if (isLoadMore) {
         setPosts((prevPosts) => [...prevPosts, ...postsArray]);
+      } else {
+        setPosts(postsArray);
       }
 
-      setTotalPages(responseData.totalPages || 0);
+      // Update pagination info
+      const newTotalPages = responseData.totalPages || 0;
+      setTotalPages(newTotalPages);
     } catch (error) {
       console.error(`Fetching error: ${error}`);
-      if (page === 1) {
+      setHasError(true);
+
+      if (!isLoadMore) {
         setPosts([]);
         setTotalPages(0);
+        setCurrentPage(1);
       }
     } finally {
       setLoading(false);
     }
   }
 
+  // Handle click outside for search dropdown
   useEffect(() => {
     function handleClickOutside(event) {
       if (
@@ -100,7 +113,7 @@ function ArticleSection() {
     };
   }, []);
 
-  //Search for articles with debounce
+  // Search for articles with debounce
   const searchArticles = useMemo(
     () =>
       debounce(async (term) => {
@@ -141,26 +154,40 @@ function ArticleSection() {
   const handleResultClick = (postId) => {
     setShowDropdown(false);
     setSearchTerm("");
-    navigate(`/post/${postId}`);
+    navigate(`/posts/${postId}`);
   };
 
+  // Reset pagination when category changes
   useEffect(() => {
     setCurrentPage(1);
     setPosts([]);
-    getArticles(1, selectedCategory);
+    setTotalPages(0);
+    setHasError(false);
+    getArticles(1, selectedCategory, false);
   }, [selectedCategory]);
 
+  // Handle pagination for load more
   useEffect(() => {
-    // Only fetch if we're not on page 1 (which is already handled by the category change)
-    if (currentPage > 1) {
-      getArticles(currentPage, selectedCategory);
+    // Only fetch if we're not on page 1 and we have valid pagination info
+    if (currentPage > 1 && totalPages > 0 && currentPage <= totalPages) {
+      getArticles(currentPage, selectedCategory, true);
     }
-  }, [currentPage, selectedCategory]);
+  }, [currentPage]);
 
   const handleViewMore = () => {
-    if (currentPage < totalPages) {
+    // Additional safety check before incrementing page
+    if (currentPage < totalPages && !isLoading) {
       setCurrentPage((prevPage) => prevPage + 1);
     }
+  };
+
+  // Retry function for error states
+  const handleRetry = () => {
+    setHasError(false);
+    setCurrentPage(1);
+    setPosts([]);
+    setTotalPages(0);
+    getArticles(1, selectedCategory, false);
   };
 
   return (
@@ -169,8 +196,9 @@ function ArticleSection() {
         <h2 className="heading-3 !text-[var(--color-brown-600)] p-4 sm:p-0">
           Latest articles
         </h2>
+
         {/* Responsive Container */}
-        <div className=" bg-[var(--color-brown-200)] rounded-lg p-4 flex flex-col sm:h-22 sm:flex-row sm:justify-between sm:items-center sm:py-4 sm:px-6">
+        <div className="bg-[var(--color-brown-200)] rounded-lg p-4 flex flex-col sm:h-22 sm:flex-row sm:justify-between sm:items-center sm:py-4 sm:px-6">
           {/* Categories - Buttons on Desktop, Dropdown on Mobile */}
           <div className="w-full sm:w-auto">
             {/* Buttons for Desktop */}
@@ -178,11 +206,11 @@ function ArticleSection() {
               {categories.map((category) => (
                 <button
                   key={category}
-                  disabled={selectedCategory === category}
+                  disabled={selectedCategory === category || isLoading}
                   className={`px-4 py-2 rounded-lg text-gray-500 transition ${
                     selectedCategory === category
                       ? "bg-gray-300 text-gray-900"
-                      : "hover:bg-gray-100 hover:text-gray-900 hover:cursor-pointer"
+                      : "hover:bg-gray-100 hover:text-gray-900 hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   }`}
                   onClick={() => setSelectedCategory(category)}
                 >
@@ -193,7 +221,7 @@ function ArticleSection() {
           </div>
 
           {/* Search Bar */}
-          <div className="relative w-full sm:w-90 ">
+          <div className="relative w-full sm:w-90">
             <Input
               ref={searchInputRef}
               type="text"
@@ -241,6 +269,7 @@ function ArticleSection() {
               value={selectedCategory}
               onValueChange={setSelectedCategory}
               className="block"
+              disabled={isLoading}
             >
               <SelectTrigger className="w-full !h-12 py-3 pr-3 pl-4 border border-[var-(--color-brown-300)] sm:hidden bg-white !text-[var(--color-brown-400)]">
                 <SelectValue placeholder="Highlight" />
@@ -259,20 +288,38 @@ function ArticleSection() {
         </div>
       </div>
 
-      {/* Blog Card */}
+      {/* Error State */}
+      {hasError && (
+        <div className="flex flex-col items-center justify-center py-8 px-4">
+          <p className="text-red-600 text-center mb-4">
+            Sorry, we couldn't load the articles. Please try again.
+          </p>
+          <button
+            onClick={handleRetry}
+            className="px-4 py-2 bg-[var(--color-brown-600)] text-white rounded-lg hover:bg-[var(--color-brown-700)] transition"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {/* Blog Cards */}
       <div className="grid grid-cols-1 gap-12 pt-6 pb-20 px-4 md:grid-cols-2 md:p-0">
-        {posts.length === 0 && !isLoading ? (
+        {posts.length === 0 && !isLoading && !hasError ? (
           <p className="text-[var(--color-gray-600)] text-center col-span-2 text-2xl my-5">
             No articles found in this category.
           </p>
         ) : (
-          posts.map((item, index) => <BlogCard key={index} post={item} />)
+          posts.map((item, index) => (
+            <BlogCard key={`${item.id}-${index}`} post={item} />
+          ))
         )}
-        {/* ViewMore Mobile*/}
-        {currentPage < totalPages && (
+
+        {/* ViewMore Mobile */}
+        {currentPage < totalPages && !hasError && (
           <div className="flex flex-row justify-center mt-9 mb-4 md:hidden">
             <button
-              className="body-1 !text-[var(--color-brown-600)] h-15 w-40 min-w-40 hover:underline hover:cursor-pointer"
+              className="body-1 !text-[var(--color-brown-600)] h-15 w-40 min-w-40 hover:underline hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={handleViewMore}
               disabled={isLoading}
             >
@@ -281,11 +328,12 @@ function ArticleSection() {
           </div>
         )}
       </div>
-      {/* ViewMore Desktop*/}
-      {currentPage < totalPages && (
+
+      {/* ViewMore Desktop */}
+      {currentPage < totalPages && !hasError && (
         <div className="hidden md:flex flex-row justify-center mt-10">
           <button
-            className="body-1 !text-[var(--color-brown-600)] h-15 w-40 min-w-40 hover:underline hover:cursor-pointer"
+            className="body-1 !text-[var(--color-brown-600)] h-15 w-40 min-w-40 hover:underline hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             onClick={handleViewMore}
             disabled={isLoading}
           >
@@ -296,5 +344,4 @@ function ArticleSection() {
     </div>
   );
 }
-
 export default ArticleSection;

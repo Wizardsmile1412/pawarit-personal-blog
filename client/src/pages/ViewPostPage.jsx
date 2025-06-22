@@ -2,10 +2,8 @@ import ReactMarkdown from "react-markdown";
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthenticationContext";
-import axios from "axios";
 import { Heart } from "lucide-react";
 import { useToast } from "@/hooks/useToast";
-import { toast, Toaster } from "sonner";
 import "@/styles/globals.css";
 import { Footer, LoadingScreen } from "../components/websection/PageContainer";
 import { Navbar } from "../components/websection/Navbar";
@@ -13,6 +11,7 @@ import AuthorSidebar from "@/components/websection/AuthorSidebar";
 import { CommentForm } from "@/components/websection/CommentForm";
 import CommentList from "@/components/websection/CommentList";
 import { formatDate } from "@/utils/dateUtils";
+import axiosInstance from "@/api/axiosInstance";
 
 const LoginDialog = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
@@ -84,9 +83,67 @@ function ViewPostPage() {
   const { showError, showSuccess } = useToast();
   const [commentTrigger, setCommentTrigger] = useState(0);
 
-  const handleLikeClick = () => {
+  // Like functionality state
+  const [isLiked, setIsLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(0);
+  const [isLikeLoading, setIsLikeLoading] = useState(false);
+
+  // Check if user has liked the post
+  const checkLikeStatus = async () => {
+    if (!isAuthenticated || !postId) return;
+
+    try {
+      const response = await axiosInstance.get(`/posts/${postId}/like-status`);
+      if (response.data.success) {
+        setIsLiked(response.data.isLiked);
+      }
+    } catch (error) {
+      console.error("Failed to check like status:", error);
+    }
+  };
+
+  const handleLikeClick = async () => {
     if (!isAuthenticated) {
       setLoginDialogOpen(true);
+      return;
+    }
+
+    if (isLikeLoading) return; 
+
+    setIsLikeLoading(true);
+
+    const previousIsLiked = isLiked;
+    const previousLikesCount = likesCount;
+
+    setIsLiked(!isLiked);
+    setLikesCount((prevCount) => (isLiked ? prevCount - 1 : prevCount + 1));
+
+    try {
+      const response = await axiosInstance.post(`/posts/${postId}/like`);
+
+      if (response.data.success) {
+        // Update with actual values from server
+        setIsLiked(response.data.isLiked);
+        setLikesCount(response.data.likesCount);
+
+        // Update postInfo to keep it in sync
+        setPostInfo((prev) => ({
+          ...prev,
+          likes_count: response.data.likesCount,
+        }));
+      }
+    } catch (error) {
+      // Revert optimistic update on error
+      setIsLiked(previousIsLiked);
+      setLikesCount(previousLikesCount);
+
+      console.error("Failed to handle like:", error);
+      showError(
+        "Failed to process like",
+        error.response?.data?.error || "Please try again later"
+      );
+    } finally {
+      setIsLikeLoading(false);
     }
   };
 
@@ -104,22 +161,10 @@ function ViewPostPage() {
       // Copy to clipboard
       await navigator.clipboard.writeText(currentUrl);
 
-      // Show success toast
-      toast.success(
-        <div className="flex flex-col gap-1">
-          <p className="font-semibold">Copied!</p>
-          <p className="text-sm">
-            This article has been copied to your clipboard.
-          </p>
-        </div>,
-        {
-          duration: 2000,
-          style: { backgroundColor: "#10B981", color: "white" },
-        }
-      );
+      showSuccess("Copied!", "This article has been copied to your clipboard.");
     } catch (error) {
-      // Show error toast if copying fails
-      toast.error("Failed to copy link to clipboard", error);
+      console.error("Failed to copy link to clipboard", error);
+      showError("Failed to copy link to clipboard");
     }
   };
 
@@ -149,11 +194,9 @@ function ViewPostPage() {
 
   const getContents = async (postId) => {
     try {
-      const response = await axios.get(
-        `https://blog-post-project-api.vercel.app/posts/${postId}`
-      );
-      console.log("response post:", response.data);
+      const response = await axiosInstance.get(`/posts/${postId}`);
       setPostInfo(response.data);
+      setLikesCount(response.data.likes_count || 0);
     } catch (error) {
       console.error("Failed to show content: ", error);
     }
@@ -167,9 +210,12 @@ function ViewPostPage() {
     getContents(postId);
   }, [postId]);
 
+  useEffect(() => {
+    checkLikeStatus();
+  }, [isAuthenticated, postId]);
+
   return (
     <>
-      <Toaster position="bottom-right" />
       <Navbar />
 
       <section className="page-container w-full flex flex-col justify-center items-center px-4 sm:px-7 md:px-20">
@@ -193,23 +239,25 @@ function ViewPostPage() {
               <div className="mb-6 sm:mb-8 md:mb-12">
                 <div className="flex items-center gap-4 mb-4">
                   <span className="bg-green-100 text-green-600 px-3 py-1 rounded-full text-sm font-medium">
-                    {postInfo.category}
+                    {postInfo?.categories?.name}
                   </span>
                   <span className="text-gray-500 text-sm sm:text-base">
-                    {formatDate(postInfo.date)}
+                    {formatDate(postInfo?.date)}
                   </span>
                 </div>
                 <h1 className="text-2xl sm:text-3xl md:text-4xl font-semibold text-gray-800 mb-4">
-                  {postInfo.title}
+                  {postInfo?.title}
                 </h1>
                 <p className="text-sm sm:text-base mb-4">
-                  {postInfo.description}
+                  {postInfo?.description}
                 </p>
               </div>
 
               {/* Article Content */}
               <div className="markdown text-sm sm:text-base">
-                <ReactMarkdown>{postInfo.content}</ReactMarkdown>
+                <ReactMarkdown>
+                  {postInfo?.content?.replace(/\\n/g, "\n")}
+                </ReactMarkdown>
               </div>
 
               {/* Author Profile - Mobile Only */}
@@ -217,22 +265,22 @@ function ViewPostPage() {
                 <div className="flex items-center gap-3 mb-5">
                   <div className="w-11 h-11 rounded-full overflow-hidden">
                     <img
-                      src={postInfo.author?.avatar || postInfo.image}
-                      alt={postInfo.author?.name}
+                      src={postInfo.users?.profile_pic || postInfo.image}
+                      alt={postInfo.users?.name}
                       className="w-full h-full object-cover"
                     />
                   </div>
                   <div>
                     <p className="text-xs text-gray-500">Author</p>
                     <h3 className="font-semibold text-lg">
-                      {postInfo.author?.name || "Author Name"}
+                      {postInfo.users?.name || "Author Name"}
                     </h3>
                   </div>
                 </div>
                 <div className="border-t border-gray-300 my-5"></div>
                 <p className="text-gray-500 text-sm">
-                  {postInfo.author?.bio ||
-                    "I am a pet enthusiast and freelance writer who specializes in animal behavior and care. With a deep love for cats, I enjoy sharing insights on feline companionship and wellness."}
+                  {postInfo.users?.bio ||
+                    "I'm a coffee-loving guy who wants to sip coffee every morning and listen to my favorite songs."}
                 </p>
               </div>
 
@@ -240,34 +288,51 @@ function ViewPostPage() {
               <div className="w-full bg-[#EFEEEB] rounded-lg flex flex-col sm:flex-row justify-between items-center p-4 sm:p-6 my-6 sm:my-8 md:my-10 gap-4">
                 <button
                   onClick={handleLikeClick}
-                  className="w-full sm:w-auto flex items-center justify-center gap-3 bg-white border border-gray-400 px-10 py-3 rounded-full"
+                  disabled={isLikeLoading}
+                  className={`w-full sm:w-auto flex items-center justify-center gap-3 px-10 py-3 rounded-full transition-all duration-200 ${
+                    isLiked
+                      ? "bg-red-100 border border-red-300 text-red-600"
+                      : "bg-white border border-gray-400 text-gray-700"
+                  } ${
+                    isLikeLoading
+                      ? "opacity-50 cursor-not-allowed"
+                      : "hover:cursor-pointer hover:shadow-sm"
+                  }`}
                 >
-                  <Heart size={18} />
-                  <span>{postInfo.likes}</span>
+                  <Heart
+                    size={18}
+                    className={`transition-all duration-200 ${
+                      isLiked ? "fill-red-500 text-red-500" : "text-gray-600"
+                    }`}
+                  />
+                  <span className="font-medium">{likesCount}</span>
+                  {isLikeLoading && (
+                    <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin"></div>
+                  )}
                 </button>
                 <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
                   <button
                     onClick={handleCopyLink}
-                    className="flex-1 sm:flex-none flex items-center justify-center gap-3 bg-white border border-gray-400 px-7 sm:px-10 py-3 rounded-full"
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-3 bg-white border border-gray-400 px-7 sm:px-10 py-3 rounded-full hover:cursor-pointer hover:shadow-sm transition-all duration-200"
                   >
                     <span>Copy link</span>
                   </button>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => handleSocialShare("facebook")}
-                      className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center"
+                      className="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center hover:cursor-pointer hover:bg-blue-600 transition-colors duration-200"
                     >
                       <span className="text-white font-bold">f</span>
                     </button>
                     <button
                       onClick={() => handleSocialShare("linkedin")}
-                      className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center"
+                      className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center hover:cursor-pointer hover:bg-blue-700 transition-colors duration-200"
                     >
                       <span className="text-white font-bold">in</span>
                     </button>
                     <button
                       onClick={() => handleSocialShare("twitter")}
-                      className="w-12 h-12 bg-blue-400 rounded-full flex items-center justify-center"
+                      className="w-12 h-12 bg-blue-400 rounded-full flex items-center justify-center hover:cursor-pointer hover:bg-blue-500 transition-colors duration-200"
                     >
                       <span className="text-white font-bold">t</span>
                     </button>
@@ -285,16 +350,13 @@ function ViewPostPage() {
               />
 
               {/* Comment List */}
-              <CommentList
-                postId={postId}
-                commentTrigger={commentTrigger}
-              />
+              <CommentList postId={postId} commentTrigger={commentTrigger} />
             </div>
           </div>
 
           {/* Author Profile Sidebar - Desktop Only */}
           <div className="author-profile hidden md:block self-start sticky top-6 h-fit w-1/4">
-            <AuthorSidebar post={postInfo} />
+            <AuthorSidebar author={postInfo.users} />
           </div>
         </section>
       </section>

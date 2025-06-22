@@ -33,7 +33,7 @@ function App() {
         <Routes>
           {/* เส้นทางสาธารณะที่ทุกคนเข้าถึงได้ */}
           <Route path="/" element={<LandingPage />} />
-          <Route path="/post/:postId" element={<ViewPostPage />} />
+          <Route path="/posts/:postId" element={<ViewPostPage />} />
 
           {/* เส้นทางที่เฉพาะผู้ที่ยังไม่ล็อกอินเข้าถึงได้ */}
           <Route

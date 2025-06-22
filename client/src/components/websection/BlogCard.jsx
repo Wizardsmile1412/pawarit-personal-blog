@@ -12,7 +12,7 @@ function BlogCard({ post }) {
   return (
     <div className="flex flex-col gap-4">
       <Link
-        to={`/post/${post.id}`}
+        to={`/posts/${post.id}`}
         className="relative h-[212px] sm:h-[360px]"
       >
         <img
@@ -27,7 +27,7 @@ function BlogCard({ post }) {
             {post.category}
           </span>
         </div>
-        <Link to={`/post/${post.id}`}>
+        <Link to={`/posts/${post.id}`}>
           <h2 className="text-start font-bold text-xl mb-2 line-clamp-2 hover:underline">
             {post.title}
           </h2>
