@@ -6,6 +6,7 @@ import authRouter from "./routes/authRoutes.mjs";
 import adminRouter from "./routes/adminRoutes.mjs";
 import commentRoutes from "./routes/commentRoutes.mjs"
 import categoriesRouter from "./routes/categoriesRoutes.mjs";
+import shareRouter from "./routes/shareRoutes.mjs";
 
 dotenv.config();
 
@@ -40,6 +41,7 @@ app.use("/posts", postsRouter);
 app.use("/admin", adminRouter);
 app.use("/admin/categories", categoriesRouter);
 app.use("/comments", commentRoutes);
+app.use("/share", shareRouter);
 
 // Simple 404 handler
 app.use((req, res) => {
