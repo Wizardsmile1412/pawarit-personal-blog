@@ -199,7 +199,7 @@ function ViewPostPage() {
         ",left=" +
         (window.screen.width / 2 - 313) +
         ",toolbar=0,status=0,scrollbars=1,resizable=1"
-    ); 
+    );
   };
 
   const getContents = async (postId) => {
@@ -223,6 +223,10 @@ function ViewPostPage() {
   useEffect(() => {
     checkLikeStatus();
   }, [isAuthenticated, postId]);
+
+  useEffect(() => {
+    document.title = postInfo.title || "My Personal Blog";
+  }, [postInfo.title]);
 
   return (
     <>
