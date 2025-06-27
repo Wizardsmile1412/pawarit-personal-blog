@@ -169,40 +169,37 @@ function ViewPostPage() {
   };
 
   const handleSocialShare = (platform) => {
-    const encodedUrl = encodeURIComponent(
-      `https://yourdomain.com/share/${postId}`
-    );
+    const shareUrl = `https://pawarit-personal-blog-server.vercel.app/share/${postId}`;
+    const encodedUrl = encodeURIComponent(shareUrl);
     const encodedTitle = encodeURIComponent(
       postInfo?.title || "Check out this article"
     );
 
-    let shareUrl;
+    let platformUrl;
 
     switch (platform) {
       case "facebook":
-        shareUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
+        platformUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`;
         break;
       case "linkedin":
-        shareUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`;
+        platformUrl = `https://www.linkedin.com/sharing/share-offsite/?url=${encodedUrl}`;
         break;
       case "twitter":
-        shareUrl = `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`;
+        platformUrl = `https://twitter.com/intent/tweet?url=${encodedUrl}&text=${encodedTitle}`;
         break;
       default:
         return;
     }
 
-    const popup = window.open(
-      shareUrl,
+    window.open(
+      platformUrl,
       "share-dialog",
       "width=626,height=436,top=" +
         (window.screen.height / 2 - 218) +
         ",left=" +
         (window.screen.width / 2 - 313) +
         ",toolbar=0,status=0,scrollbars=1,resizable=1"
-    );
-
-    if (popup) popup.focus();
+    ); 
   };
 
   const getContents = async (postId) => {
