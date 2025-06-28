@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthenticationContext";
 import "@/styles/globals.css";
+import { NotificationDropdown } from "@/components/websection/NotificationDropdown";
 import logo from "@/assets/logo.png";
 
 export function Navbar() {
@@ -175,38 +176,8 @@ export function MemberNavbar() {
 
         {/* Desktop Member Navigation */}
         <div className="hidden md:flex items-center gap-4">
-          {/* Notification Bell */}
-          <div
-            className="flex justify-center items-center w-12 h-12 bg-white border border-[#EFEEEB] rounded-full cursor-pointer hover:bg-[#EFEEEB] transition duration-200"
-            onClick={() => navigate("/notifications")}
-          >
-            <div className="relative">
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M18 8C18 6.4087 17.3679 4.88258 16.2426 3.75736C15.1174 2.63214 13.5913 2 12 2C10.4087 2 8.88258 2.63214 7.75736 3.75736C6.63214 4.88258 6 6.4087 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z"
-                  stroke="#75716B"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M13.73 21C13.5542 21.3031 13.3019 21.5547 12.9982 21.7295C12.6946 21.9044 12.3504 21.9965 12 21.9965C11.6496 21.9965 11.3054 21.9044 11.0018 21.7295C10.6982 21.5547 10.4458 21.3031 10.27 21"
-                  stroke="#75716B"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              {/* Notification indicator */}
-              {/* <div className="absolute top-0 right-0 w-2 h-2 bg-[#EB5164] rounded-full"></div> */}
-            </div>
-          </div>
+          {/* Notification Bell - Replace with NotificationDropdown */}
+          <NotificationDropdown />
 
           {/* User Profile */}
           <div className="relative">
@@ -325,7 +296,7 @@ export function MemberNavbar() {
                     <path
                       d="M5.93782 15.5C5.14475 14.1264 4.84171 12.5241 5.07833 10.9557C5.31495 9.38734 6.07722 7.94581 7.24024 6.86729C8.40327 5.78877 9.8981 5.13721 11.4798 5.01935C13.0616 4.90149 14.6365 5.32432 15.9465 6.21856C17.2565 7.1128 18.224 8.42544 18.6905 9.94144C19.1569 11.4574 19.0947 13.0869 18.5139 14.5629C17.9332 16.0389 16.8684 17.2739 15.494 18.0656C14.1196 18.8573 12.517 19.1588 10.9489 18.9206"
                       stroke="#26231E"
-                      stroke-linecap="round"
+                      strokeLinecap="round"
                     />
                   </svg>
                   <span className="font-medium text-[16px] text-[#43403B]">
@@ -448,31 +419,8 @@ export function MemberNavbar() {
               </span>
             </div>
 
-            {/* Notification Bell - Frame 427321512 */}
-            <div className="flex justify-center items-center w-12 h-12 bg-white border border-[#EFEEEB] rounded-full">
-              <svg
-                width="24"
-                height="24"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M18 8C18 6.4087 17.3679 4.88258 16.2426 3.75736C15.1174 2.63214 13.5913 2 12 2C10.4087 2 8.88258 2.63214 7.75736 3.75736C6.63214 4.88258 6 6.4087 6 8C6 15 3 17 3 17H21C21 17 18 15 18 8Z"
-                  stroke="#75716B"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-                <path
-                  d="M13.73 21C13.5542 21.3031 13.3019 21.5547 12.9982 21.7295C12.6946 21.9044 12.3504 21.9965 12 21.9965C11.6496 21.9965 11.3054 21.9044 11.0018 21.7295C10.6982 21.5547 10.4458 21.3031 10.27 21"
-                  stroke="#75716B"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
+            {/* Notification Bell for Mobile - Replace with NotificationDropdown */}
+            <NotificationDropdown />
           </div>
 
           {/* Menu Items Container - Frame 427321543 */}
