@@ -122,10 +122,24 @@ authRouter.post("/register", async (req, res) => {
       return res.status(500).json({ error: "Failed to save user data" });
     }
 
-    res.status(201).json({
-      message: "User created successfully",
-      user: insertedUser,
-    });
+    // Check if user needs email confirmation or can be auto-logged in
+    if (data.session) {
+      // User is automatically logged in (email confirmation disabled)
+      res.status(201).json({
+        message: "User created and logged in successfully",
+        user: insertedUser,
+        access_token: data.session.access_token,
+        refresh_token: data.session.refresh_token,
+      });
+    } else {
+      // Email confirmation required
+      res.status(201).json({
+        message:
+          "User created successfully. Please check your email to confirm your account.",
+        user: insertedUser,
+        requiresConfirmation: true,
+      });
+    }
   } catch (error) {
     res.status(500).json({ error: "An error occurred during registration" });
   }
@@ -154,6 +168,7 @@ authRouter.post("/login", async (req, res) => {
     return res.status(200).json({
       message: "Signed in successfully",
       access_token: data.session.access_token,
+      refresh_token: data.session.refresh_token,
     });
   } catch (error) {
     return res.status(500).json({ error: "An error occurred during login" });

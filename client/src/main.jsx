@@ -5,6 +5,7 @@ import "@/styles/globals.css";
 import { BrowserRouter } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthenticationContext.jsx";
 import { AdminAuthProvider } from "@/contexts/AdminAuthContext.jsx";
+import { NotificationProvider } from "@/contexts/NotificationContext";
 import "@/api/axiosInstance.js";
 
 createRoot(document.getElementById("root")).render(
@@ -12,7 +13,9 @@ createRoot(document.getElementById("root")).render(
     <BrowserRouter>
       <AuthProvider>
         <AdminAuthProvider>
-          <App />
+          <NotificationProvider>
+            <App />
+          </NotificationProvider>
         </AdminAuthProvider>
       </AuthProvider>
     </BrowserRouter>
