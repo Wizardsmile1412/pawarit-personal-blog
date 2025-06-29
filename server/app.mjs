@@ -7,6 +7,7 @@ import adminRouter from "./routes/adminRoutes.mjs";
 import commentRoutes from "./routes/commentRoutes.mjs"
 import categoriesRouter from "./routes/categoriesRoutes.mjs";
 import shareRouter from "./routes/shareRoutes.mjs";
+import adminNotificationRouter from "./routes/adminNotificationRoutes.mjs";
 
 dotenv.config();
 
@@ -17,7 +18,7 @@ const PORT = process.env.PORT || 4000;
 app.use(cors({
   origin: [
     'https://pawarit-coffee-blog.vercel.app',
-    'http://localhost:3000',
+    'http://localhost:4000',
     'http://localhost:5173'
   ],
   credentials: true,
@@ -42,6 +43,7 @@ app.use("/admin", adminRouter);
 app.use("/admin/categories", categoriesRouter);
 app.use("/comments", commentRoutes);
 app.use("/share", shareRouter);
+app.use("/admin/notifications", adminNotificationRouter);
 
 // Simple 404 handler
 app.use((req, res) => {
