@@ -1,10 +1,12 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from "@supabase/supabase-js";
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables. Please check your .env file.')
+  throw new Error(
+    "Missing Supabase environment variables. Please check your .env file."
+  );
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
@@ -12,12 +14,12 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
     // Optional: Configure auth settings
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: true
+    detectSessionInUrl: true,
   },
   // Optional: Configure realtime settings
   realtime: {
     params: {
-      eventsPerSecond: 10
-    }
-  }
-})
+      eventsPerSecond: 10,
+    },
+  },
+});

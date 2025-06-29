@@ -1,5 +1,5 @@
 import ReactMarkdown from "react-markdown";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthenticationContext";
 import { Heart } from "lucide-react";
@@ -82,11 +82,15 @@ function ViewPostPage() {
   const { state, isAuthenticated } = useAuth();
   const { showError, showSuccess } = useToast();
   const [commentTrigger, setCommentTrigger] = useState(0);
+  const location = useLocation(); // Add this import: import { useLocation } from 'react-router-dom'
 
   // Like functionality state
   const [isLiked, setIsLiked] = useState(false);
   const [likesCount, setLikesCount] = useState(0);
   const [isLikeLoading, setIsLikeLoading] = useState(false);
+
+  // Add refresh trigger for forced updates
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // Check if user has liked the post
   const checkLikeStatus = async () => {
@@ -216,17 +220,48 @@ function ViewPostPage() {
     setCommentTrigger((prev) => prev + 1);
   };
 
+  // Function to refresh all data
+  const refreshPostData = () => {
+    getContents(postId);
+    checkLikeStatus();
+    setCommentTrigger((prev) => prev + 1);
+  };
+
   useEffect(() => {
     getContents(postId);
-  }, [postId]);
+  }, [postId, refreshTrigger]);
 
   useEffect(() => {
     checkLikeStatus();
-  }, [isAuthenticated, postId]);
+  }, [isAuthenticated, postId, refreshTrigger]);
 
   useEffect(() => {
     document.title = postInfo.title || "My Personal Blog";
   }, [postInfo.title]);
+
+  // Listen for navigation state that indicates a refresh is needed
+  useEffect(() => {
+    if (location.state?.refreshPost) {
+      refreshPostData();
+      // Clear the state to prevent infinite refresh loops
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state]);
+
+  // Add a custom event listener for manual refresh triggers
+  useEffect(() => {
+    const handlePostRefresh = (event) => {
+      if (event.detail.postId === postId) {
+        refreshPostData();
+      }
+    };
+
+    window.addEventListener("refreshPost", handlePostRefresh);
+
+    return () => {
+      window.removeEventListener("refreshPost", handlePostRefresh);
+    };
+  }, [postId]);
 
   return (
     <>

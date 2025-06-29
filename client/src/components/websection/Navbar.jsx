@@ -183,7 +183,7 @@ export function MemberNavbar() {
           <div className="relative">
             <div className="flex items-center gap-2">
               <div className="w-12 h-12 bg-white rounded-full overflow-hidden">
-                {user?.profilePic ? (
+                {user.profilePic ? (
                   <img
                     src={user.profilePic}
                     alt="User"

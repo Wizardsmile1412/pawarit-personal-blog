@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useNotifications } from "@/contexts/NotificationContext"; // Adjust import path
+import { useNotifications } from "@/contexts/NotificationContext";
 import { useNavigate } from "react-router-dom";
 
 export function NotificationDropdown() {
@@ -12,6 +12,7 @@ export function NotificationDropdown() {
     notifications,
     unreadCount,
     loading,
+    handleNotificationClick,
     markAsRead,
     markAllAsRead,
     deleteNotification,
@@ -43,20 +44,6 @@ export function NotificationDropdown() {
 
   const toggleDropdown = () => {
     setIsOpen(!isOpen);
-  };
-
-  const handleNotificationClick = async (notification) => {
-    // Mark as read if not already read
-    if (!notification.read) {
-      await markAsRead(notification.id);
-    }
-
-    // Navigate to the related post if available
-    if (notification.post_id) {
-      navigate(`/posts/${notification.post_id}`);
-    }
-
-    setIsOpen(false);
   };
 
   const handleMarkAllAsRead = async () => {
@@ -248,10 +235,13 @@ export function NotificationDropdown() {
               notifications.map((notification) => (
                 <div
                   key={notification.id}
-                  className={`flex items-start px-4 py-3 hover:bg-[#EFEEEB] cursor-pointer transition duration-200 border-b border-[#EFEEEB] last:border-b-0 ${
+                  className={`group flex items-start px-4 py-3 hover:bg-[#EFEEEB] cursor-pointer transition duration-200 border-b border-[#EFEEEB] last:border-b-0 ${
                     !notification.read ? "bg-blue-50" : ""
                   }`}
-                  onClick={() => handleNotificationClick(notification)}
+                  onClick={() => {
+                    handleNotificationClick(notification);
+                    setIsOpen(false);
+                  }}
                 >
                   <div className="flex-shrink-0 mr-3">
                     {notification.actor?.profilePic ? (
@@ -282,7 +272,7 @@ export function NotificationDropdown() {
                       onClick={(e) =>
                         handleDeleteNotification(e, notification.id)
                       }
-                      className="opacity-0 group-hover:opacity-100 text-[#75716B] hover:text-[#43403B] transition duration-200 p-1"
+                      className="opacity-0 group-hover:opacity-100 text-[#75716B]  hover:text-red-500 hover:cursor-pointer transition duration-200 p-1"
                       title="Delete notification"
                     >
                       <svg

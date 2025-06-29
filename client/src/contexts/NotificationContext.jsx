@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext, createContext } from "react";
-import { supabase } from "@/api/supabaseClient"; // Adjust import path
-import { useAuth } from "@/contexts/AuthContext"; // Adjust import path
+import { useNavigate } from "react-router-dom"; // Add this import
+import { supabase } from "@/api/supabaseClient";
+import { useAuth } from "@/contexts/AuthenticationContext";
 
 const NotificationContext = createContext();
 
@@ -9,6 +10,7 @@ export function NotificationProvider({ children }) {
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const { user, isAuthenticated } = useAuth();
+  const navigate = useNavigate(); // Add this hook
 
   // Fetch notifications from database
   const fetchNotifications = async () => {
@@ -16,89 +18,199 @@ export function NotificationProvider({ children }) {
 
     try {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('notifications')
-        .select(`
-          *,
-          actor:actor_id(id, name, profilePic),
-          post:post_id(id, title)
-        `)
-        .eq('recipient_id', user.id)
-        .order('created_at', { ascending: false })
-        .limit(20);
 
-      if (error) throw error;
+      // First, get the notifications
+      const { data: notificationsData, error: notError } = await supabase
+        .from("notifications")
+        .select("*")
+        .eq("recipient_id", user.id)
+        .order("created_at", { ascending: false })
+        .limit(10);
 
-      setNotifications(data || []);
-      setUnreadCount(data?.filter(n => !n.read).length || 0);
+      if (notError) {
+        console.error("Error fetching notifications:", notError);
+        throw notError;
+      }
+
+      if (!notificationsData || notificationsData.length === 0) {
+        setNotifications([]);
+        setUnreadCount(0);
+        return;
+      }
+
+      // Get unique actor IDs and post IDs for batch fetching
+      const actorIds = [
+        ...new Set(
+          notificationsData.filter((n) => n.actor_id).map((n) => n.actor_id)
+        ),
+      ];
+
+      const postIds = [
+        ...new Set(
+          notificationsData.filter((n) => n.post_id).map((n) => n.post_id)
+        ),
+      ];
+
+      // Batch fetch actors and posts
+      const [actorsResult, postsResult] = await Promise.all([
+        // Fetch actors (users)
+        actorIds.length > 0
+          ? supabase
+              .from("users") // Replace with your actual users table name
+              .select("id, name, profile_pic")
+              .in("id", actorIds)
+          : Promise.resolve({ data: [], error: null }),
+
+        // Fetch posts
+        postIds.length > 0
+          ? supabase
+              .from("posts") // Replace with your actual posts table name
+              .select("id, title")
+              .in("id", postIds)
+          : Promise.resolve({ data: [], error: null }),
+      ]);
+
+      // Create lookup maps
+      const actorsMap = new Map(
+        (actorsResult.data || []).map((actor) => [actor.id, actor])
+      );
+      const postsMap = new Map(
+        (postsResult.data || []).map((post) => [post.id, post])
+      );
+
+      // Enrich notifications with related data
+      const enrichedNotifications = notificationsData.map((notification) => ({
+        ...notification,
+        actor: notification.actor_id
+          ? actorsMap.get(notification.actor_id)
+          : null,
+        post: notification.post_id ? postsMap.get(notification.post_id) : null,
+      }));
+
+      setNotifications(enrichedNotifications);
+      setUnreadCount(enrichedNotifications.filter((n) => !n.read).length);
     } catch (error) {
-      console.error('Error fetching notifications:', error);
+      console.error("Error fetching notifications:", error);
     } finally {
       setLoading(false);
     }
   };
 
+  // Helper function to enrich a single notification
+  const enrichNotification = async (notification) => {
+    const enriched = { ...notification };
+
+    try {
+      // Fetch actor data if actor_id exists
+      if (notification.actor_id) {
+        const { data: actorData } = await supabase
+          .from("users") // Replace with your actual users table name
+          .select("id, name, profile_pic")
+          .eq("id", notification.actor_id)
+          .single();
+
+        if (actorData) {
+          enriched.actor = actorData;
+        }
+      }
+
+      // Fetch post data if post_id exists
+      if (notification.post_id) {
+        const { data: postData } = await supabase
+          .from("posts") // Replace with your actual posts table name
+          .select("id, title")
+          .eq("id", notification.post_id)
+          .single();
+
+        if (postData) {
+          enriched.post = postData;
+        }
+      }
+    } catch (error) {
+      console.error("Error enriching notification:", error);
+    }
+
+    return enriched;
+  };
+
+  // Handle notification click with navigation and refresh logic
+  const handleNotificationClick = async (notification) => {
+    // Mark notification as read first
+    if (!notification.read) {
+      await markAsRead(notification.id);
+    }
+
+    // Navigate to the post with refresh state
+    if (notification.post_id) {
+      navigate(`/posts/${notification.post_id}`, { 
+        state: { refreshPost: true } 
+      });
+    }
+  };
+
   // Mark notification as read
   const markAsRead = async (notificationId) => {
+    if (!user?.id) return;
+
     try {
       const { error } = await supabase
-        .from('notifications')
+        .from("notifications")
         .update({ read: true })
-        .eq('id', notificationId)
-        .eq('recipient_id', user.id);
+        .eq("id", notificationId)
+        .eq("recipient_id", user.id);
 
       if (error) throw error;
 
-      setNotifications(prev =>
-        prev.map(n =>
-          n.id === notificationId ? { ...n, read: true } : n
-        )
+      setNotifications((prev) =>
+        prev.map((n) => (n.id === notificationId ? { ...n, read: true } : n))
       );
-      setUnreadCount(prev => Math.max(0, prev - 1));
+      setUnreadCount((prev) => Math.max(0, prev - 1));
     } catch (error) {
-      console.error('Error marking notification as read:', error);
+      console.error("Error marking notification as read:", error);
     }
   };
 
   // Mark all notifications as read
   const markAllAsRead = async () => {
+    if (!user?.id) return;
+
     try {
       const { error } = await supabase
-        .from('notifications')
+        .from("notifications")
         .update({ read: true })
-        .eq('recipient_id', user.id)
-        .eq('read', false);
+        .eq("recipient_id", user.id)
+        .eq("read", false);
 
       if (error) throw error;
 
-      setNotifications(prev =>
-        prev.map(n => ({ ...n, read: true }))
-      );
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
       setUnreadCount(0);
     } catch (error) {
-      console.error('Error marking all notifications as read:', error);
+      console.error("Error marking all notifications as read:", error);
     }
   };
 
   // Delete notification
   const deleteNotification = async (notificationId) => {
+    if (!user?.id) return;
+
     try {
       const { error } = await supabase
-        .from('notifications')
+        .from("notifications")
         .delete()
-        .eq('id', notificationId)
-        .eq('recipient_id', user.id);
+        .eq("id", notificationId)
+        .eq("recipient_id", user.id);
 
       if (error) throw error;
 
-      const notification = notifications.find(n => n.id === notificationId);
-      setNotifications(prev => prev.filter(n => n.id !== notificationId));
-      
+      const notification = notifications.find((n) => n.id === notificationId);
+      setNotifications((prev) => prev.filter((n) => n.id !== notificationId));
+
       if (notification && !notification.read) {
-        setUnreadCount(prev => Math.max(0, prev - 1));
+        setUnreadCount((prev) => Math.max(0, prev - 1));
       }
     } catch (error) {
-      console.error('Error deleting notification:', error);
+      console.error("Error deleting notification:", error);
     }
   };
 
@@ -110,44 +222,43 @@ export function NotificationProvider({ children }) {
 
     // Subscribe to real-time notifications
     const channel = supabase
-      .channel('notifications')
+      .channel("notifications")
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'notifications',
-          filter: `recipient_id=eq.${user.id}`
+          event: "INSERT",
+          schema: "public",
+          table: "notifications",
+          filter: `recipient_id=eq.${user.id}`,
         },
         async (payload) => {
-          // Fetch the complete notification with related data
-          const { data, error } = await supabase
-            .from('notifications')
-            .select(`
-              *,
-              actor:actor_id(id, name, profilePic),
-              post:post_id(id, title)
-            `)
-            .eq('id', payload.new.id)
-            .single();
+          console.log("New notification received:", payload);
 
-          if (!error && data) {
-            setNotifications(prev => [data, ...prev]);
-            setUnreadCount(prev => prev + 1);
+          try {
+            // Enrich the new notification with related data
+            const enrichedNotification = await enrichNotification(payload.new);
+
+            setNotifications((prev) => [enrichedNotification, ...prev]);
+            setUnreadCount((prev) => prev + 1);
+          } catch (error) {
+            console.error("Error processing real-time notification:", error);
+            // Fallback: just add the basic notification
+            setNotifications((prev) => [payload.new, ...prev]);
+            setUnreadCount((prev) => prev + 1);
           }
         }
       )
       .on(
-        'postgres_changes',
+        "postgres_changes",
         {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'notifications',
-          filter: `recipient_id=eq.${user.id}`
+          event: "UPDATE",
+          schema: "public",
+          table: "notifications",
+          filter: `recipient_id=eq.${user.id}`,
         },
         (payload) => {
-          setNotifications(prev =>
-            prev.map(n =>
+          setNotifications((prev) =>
+            prev.map((n) =>
               n.id === payload.new.id ? { ...n, ...payload.new } : n
             )
           );
@@ -162,17 +273,17 @@ export function NotificationProvider({ children }) {
 
   // Helper function to get notification message with proper formatting
   const getNotificationMessage = (notification) => {
-    const actorName = notification.actor?.name || 'Someone';
-    
+    const actorName = notification.actor?.name || "Someone";
+
     switch (notification.type) {
-      case 'new_post':
+      case "new_post":
         return `${actorName} published new article.`;
-      case 'new_like':
-        return notification.message;
-      case 'new_comment':
-        return notification.message;
+      case "new_like":
+        return notification.message || `${actorName} liked your post.`;
+      case "new_comment":
+        return notification.message || `${actorName} commented on your post.`;
       default:
-        return notification.message;
+        return notification.message || "You have a new notification.";
     }
   };
 
@@ -186,11 +297,11 @@ export function NotificationProvider({ children }) {
 
     if (diffInHours < 1) {
       const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
-      return diffInMinutes < 1 ? 'Just now' : `${diffInMinutes} minutes ago`;
+      return diffInMinutes < 1 ? "Just now" : `${diffInMinutes} minutes ago`;
     } else if (diffInHours < 24) {
-      return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
+      return `${diffInHours} hour${diffInHours > 1 ? "s" : ""} ago`;
     } else if (diffInDays < 30) {
-      return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
+      return `${diffInDays} day${diffInDays > 1 ? "s" : ""} ago`;
     } else {
       return date.toLocaleDateString();
     }
@@ -204,6 +315,7 @@ export function NotificationProvider({ children }) {
     markAsRead,
     markAllAsRead,
     deleteNotification,
+    handleNotificationClick, // Add this to the context value
     getNotificationMessage,
     getTimeAgo,
   };
@@ -218,7 +330,9 @@ export function NotificationProvider({ children }) {
 export const useNotifications = () => {
   const context = useContext(NotificationContext);
   if (!context) {
-    throw new Error('useNotifications must be used within a NotificationProvider');
+    throw new Error(
+      "useNotifications must be used within a NotificationProvider"
+    );
   }
   return context;
 };
