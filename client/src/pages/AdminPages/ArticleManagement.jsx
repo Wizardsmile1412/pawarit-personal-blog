@@ -1,6 +1,5 @@
 import { useEffect, useState, useMemo, useRef } from "react";
 import axiosInstance from "@/api/axiosInstance";
-import axios from "axios";
 import { useParams, useNavigate } from "react-router-dom";
 import { debounce } from "lodash";
 import {
@@ -46,10 +45,7 @@ export function ArticleManagement() {
         params.category = category;
       }
 
-      const response = await axios.get(
-        "https://blog-post-project-api.vercel.app/posts",
-        { params }
-      );
+      const response = await axiosInstance.get("/posts", { params });
 
       setArticles(response.data.posts);
       setTotalPages(response.data.totalPages);
@@ -91,10 +87,7 @@ export function ArticleManagement() {
             params.category = category;
           }
 
-          const response = await axios.get(
-            "https://blog-post-project-api.vercel.app/posts",
-            { params }
-          );
+          const response = await axiosInstance.get("/posts", { params });
 
           setSearchResults(response.data.posts || []);
           setSearchCurrentPage(response.data.currentPage || 1);
@@ -313,7 +306,7 @@ export function ArticleManagement() {
                 <button
                   onClick={handlePrevPage}
                   disabled={displayCurrentPage === 1}
-                  className="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Previous
                 </button>
@@ -341,7 +334,7 @@ export function ArticleManagement() {
                           className={`px-3 py-2 text-sm border rounded-md ${
                             pageNum === displayCurrentPage
                               ? "bg-black text-white border-black"
-                              : "border-gray-300 hover:bg-gray-50"
+                              : "border-gray-300 hover:bg-gray-50 hover:cursor-pointer"
                           }`}
                         >
                           {pageNum}
@@ -354,7 +347,7 @@ export function ArticleManagement() {
                 <button
                   onClick={handleNextPage}
                   disabled={displayCurrentPage === displayTotalPages}
-                  className="px-3 py-2 text-sm border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-3 py-2 text-sm border border-gray-300 rounded-md hover:cursor-pointer hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Next
                 </button>
