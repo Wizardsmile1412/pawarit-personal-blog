@@ -45,7 +45,7 @@ export function ArticleManagement() {
         params.category = category;
       }
 
-      const response = await axiosInstance.get("/posts", { params });
+      const response = await axiosInstance.get("/admin/posts", { params });
 
       setArticles(response.data.posts);
       setTotalPages(response.data.totalPages);
@@ -87,7 +87,7 @@ export function ArticleManagement() {
             params.category = category;
           }
 
-          const response = await axiosInstance.get("/posts", { params });
+          const response = await axiosInstance.get("/admin/posts", { params });
 
           setSearchResults(response.data.posts || []);
           setSearchCurrentPage(response.data.currentPage || 1);
@@ -259,8 +259,20 @@ export function ArticleManagement() {
                   </div>
                   <div className="col-span-1">
                     <span className="flex items-center">
-                      <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                      <span className="text-green-500">
+                      <span
+                        className={`w-2 h-2 rounded-full mr-2 ${
+                          article.status === "Published"
+                            ? "bg-green-500"
+                            : "bg-gray-500"
+                        }`}
+                      ></span>
+                      <span
+                        className={`${
+                          article.status === "Published"
+                            ? "text-green-500"
+                            : "text-gray-500"
+                        }`}
+                      >
                         {article.status || "Published"}{" "}
                       </span>
                     </span>

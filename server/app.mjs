@@ -4,6 +4,7 @@ import cors from "cors";
 import postsRouter from "./routes/postsRoutes.mjs";
 import authRouter from "./routes/authRoutes.mjs";
 import adminRouter from "./routes/adminRoutes.mjs";
+import adminPostsRouter from "./routes/adminPostsRoutes.mjs";
 import commentRoutes from "./routes/commentRoutes.mjs"
 import categoriesRouter from "./routes/categoriesRoutes.mjs";
 import shareRouter from "./routes/shareRoutes.mjs";
@@ -40,6 +41,7 @@ app.get('/', (req, res) => {
 app.use("/auth", authRouter);
 app.use("/posts", postsRouter);
 app.use("/admin", adminRouter);
+app.use("/admin/posts", adminPostsRouter);
 app.use("/admin/categories", categoriesRouter);
 app.use("/comments", commentRoutes);
 app.use("/share", shareRouter);
