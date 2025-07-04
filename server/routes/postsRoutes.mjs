@@ -31,7 +31,7 @@ postsRouter.get("/", async (req, res) => {
       .select(
         `
         id,
-        image,
+        image_url,
         category_id,
         title,
         description,
@@ -79,7 +79,7 @@ postsRouter.get("/", async (req, res) => {
 
     const transformedPosts = (data || []).map((post) => ({
       id: post.id,
-      image: post.image,
+      image: post.image_url,
       category: post.categories?.name || "General",
       title: post.title,
       description: post.description,

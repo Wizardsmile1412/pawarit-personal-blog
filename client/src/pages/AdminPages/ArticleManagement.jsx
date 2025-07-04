@@ -23,6 +23,10 @@ export function ArticleManagement() {
   const [isSearching, setIsSearching] = useState(false);
   const searchInputRef = useRef(null);
 
+  const [showModal, setShowModal] = useState(false);
+  const [deleteArticleId, setDeleteArticleId] = useState(null);
+  const { showSuccess, showError } = useToast();
+
   // Category filter state
   const [selectedCategory, setSelectedCategory] = useState("");
   const categories = ["Cat", "Inspiration", "General"];
@@ -160,6 +164,30 @@ export function ArticleManagement() {
     : currentPage;
   const displayTotalPages = searchTerm.trim() ? searchTotalPages : totalPages;
 
+  const handleDeleteModal = (ArticleId) => {
+    setShowModal(true);
+    setDeleteArticleId(ArticleId);
+  };
+
+  const handleCancel = () => {
+    setShowModal(false);
+    setDeleteArticleId(null);
+  };
+
+  const handleDeleteArticle = async (id) => {
+    try {
+      await axiosInstance.delete(`/admin/posts/${id}`);
+
+      setShowModal(false);
+      showSuccess("Category deleted successfully");
+      getArticles(1, selectedCategory);
+      setDeleteArticleId(null);
+    } catch (error) {
+      console.error("Error deleting category:", error);
+      showError(error.response?.data?.message || "Failed to delete category");
+    }
+  };
+
   return (
     <div className="flex min-h-screen bg-[var(--color-background)]">
       <AdminSidebar />
@@ -278,10 +306,16 @@ export function ArticleManagement() {
                     </span>
                   </div>
                   <div className="col-span-1 flex justify-end items-center">
-                    <button className="p-1 text-gray-400 hover:text-gray-600">
+                    <button
+                      className="p-1 text-gray-400 hover:text-gray-600"
+                      onClick={() => navigate(`/edit-article/${article.id}`)}
+                    >
                       <Edit size={18} />
                     </button>
-                    <button className="p-1 ml-2 text-gray-400 hover:text-gray-600">
+                    <button
+                      className="p-1 ml-2 text-gray-400 hover:text-gray-600"
+                      onClick={() => handleDeleteModal(article.id)}
+                    >
                       <Trash2 size={18} />
                     </button>
                   </div>
@@ -368,6 +402,43 @@ export function ArticleManagement() {
           )}
         </div>
       </div>
+      {/* Delete Post Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-[var(--color-brown-100)] flex flex-col rounded-xl pt-4 pb-10 px-6 shadow-lg w-[480px] text-center">
+            <div className="flex justify-end">
+              <button
+                onClick={handleCancel}
+                className="text-[var(--color-brown-600)] text-2xl hover:text-gray-600 hover:cursor-pointer"
+              >
+                &times;
+              </button>
+            </div>
+            <div className="flex flex-col items-center gap-6">
+              <h3 className="text-2xl font-semibold text-[var(--color-brown-600)]">
+                Delete article
+              </h3>
+              <p className="text-base text-[var(--color-brown-400)] ">
+                Do you want to delete this article?
+              </p>
+              <div className="flex justify-center gap-2">
+                <button
+                  onClick={handleCancel}
+                  className="bg-white border border-[var(-color--brown-400)] text-[var(-color--brown-600)] py-3 px-10 rounded-full hover:bg-gray-100 hover:cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleDeleteArticle(deleteArticleId)}
+                  className="bg-[var(--color-brown-600)] text-white py-3 px-10 rounded-full hover:bg-[var(--color-brown-400)] hover:cursor-pointer"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -375,12 +446,37 @@ export function ArticleManagement() {
 export function CreateArticle() {
   const [articleData, setArticleData] = useState({
     title: "",
-    category: "",
+    category_id: "",
     authorName: "Pawarit S.",
-    introduction: "",
+    description: "", 
     content: "",
     thumbnail: null,
+    image_url: null,
   });
+
+  const [isUploading, setIsUploading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(true);
+
+  // Fetch categories on component mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setIsLoadingCategories(true);
+        const response = await axiosInstance.get("/admin/categories");
+        setCategories(response.data);
+        console.log("Fetched categories:", response.data);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+        alert("Failed to load categories. Please refresh the page.");
+      } finally {
+        setIsLoadingCategories(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -390,14 +486,143 @@ export function CreateArticle() {
     }));
   };
 
-  const handleSaveAsDraft = () => {
-    console.log("Saving as draft:", articleData);
-    // Implement save as draft functionality
+  const handleThumbnailUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file");
+      return;
+    }
+
+    // Validate file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      alert("File size must be less than 5MB");
+      return;
+    }
+
+    setIsUploading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const response = await axiosInstance.post(
+        "/admin/posts/upload-image",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      setArticleData((prev) => ({
+        ...prev,
+        thumbnail: file,
+        image_url: response.data.image_url,
+      }));
+    } catch (error) {
+      console.error("Upload error:", error);
+      alert("Failed to upload image. Please try again.");
+    } finally {
+      setIsUploading(false);
+    }
   };
 
-  const handleSaveAndPublish = () => {
-    console.log("Publishing:", articleData);
-    // Implement save and publish functionality
+  const handleRemoveThumbnail = async () => {
+    if (!articleData.image_url) return;
+
+    try {
+      await axiosInstance.delete("/admin/posts/delete-image", {
+        data: {
+          image_url: articleData.image_url,
+        },
+      });
+
+      setArticleData((prev) => ({
+        ...prev,
+        thumbnail: null,
+        image_url: null,
+      }));
+    } catch (error) {
+      console.error("Delete error:", error);
+    }
+  };
+
+  const handleSaveAsDraft = async () => {
+    await handleSubmit(1); // status_id 1 for draft
+  };
+
+  const handleSaveAndPublish = async () => {
+    await handleSubmit(2); // status_id 2 for published
+  };
+
+  const handleSubmit = async (status_id) => {
+    // Validation
+    if (!articleData.title.trim()) {
+      alert("Please enter a title");
+      return;
+    }
+
+    if (!articleData.category_id) {
+      alert("Please select a category");
+      return;
+    }
+
+    if (!articleData.description.trim()) { 
+      alert("Please enter an introduction");
+      return;
+    }
+
+    if (!articleData.content.trim()) {
+      alert("Please enter content");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const payload = {
+        title: articleData.title,
+        image_url: articleData.image_url,
+        category_id: parseInt(articleData.category_id),
+        description: articleData.description, 
+        content: articleData.content,
+        status_id: status_id,
+      };
+
+      await axiosInstance.post("/admin/posts", payload);
+
+      alert(
+        status_id === 1
+          ? "Article saved as draft!"
+          : "Article published successfully!"
+      );
+
+      // Reset form
+      setArticleData({
+        title: "",
+        category_id: "",
+        authorName: "Pawarit S.",
+        description: "", 
+        content: "",
+        thumbnail: null,
+        image_url: null,
+      });
+
+      // Optionally redirect to articles list
+      window.location.href = "/article-management";
+    } catch (error) {
+      console.error("Submit error:", error);
+      const errorMessage =
+        error.response?.data?.error ||
+        "Failed to create article. Please try again.";
+      alert(errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -413,15 +638,17 @@ export function CreateArticle() {
           <div className="flex space-x-4">
             <button
               onClick={handleSaveAsDraft}
-              className="flex items-center bg-white border border-gray-300 text-gray-700 px-6 py-3 rounded-full shadow-sm hover:bg-gray-50"
+              disabled={isSubmitting}
+              className="flex items-center bg-white border border-gray-300 text-gray-700 px-6 py-3 rounded-full shadow-sm hover:bg-gray-500 hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Save as draft
+              {isSubmitting ? "Saving..." : "Save as draft"}
             </button>
             <button
               onClick={handleSaveAndPublish}
-              className="flex items-center bg-black text-white px-6 py-3 rounded-full shadow-lg hover:bg-gray-700"
+              disabled={isSubmitting}
+              className="flex items-center bg-black text-white px-6 py-3 rounded-full shadow-lg hover:bg-gray-700 hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Save and publish
+              {isSubmitting ? "Publishing..." : "Save and publish"}
             </button>
           </div>
         </header>
@@ -430,13 +657,21 @@ export function CreateArticle() {
           <div className="mb-8">
             <h2 className="text-gray-600 mb-3">Thumbnail image</h2>
             <div className="flex flex-row gap-6 justify-start w-[780px] items-end">
-              <div className="bg-gray-200 border border-gray-200 rounded-md w-120 h-60 flex items-center justify-center mb-2">
+              <div className="bg-gray-200 border border-gray-200 rounded-md w-120 h-60 flex items-center justify-center mb-2 relative">
                 {articleData.thumbnail ? (
-                  <img
-                    src={URL.createObjectURL(articleData.thumbnail)}
-                    alt="Thumbnail preview"
-                    className="h-full object-contain"
-                  />
+                  <>
+                    <img
+                      src={URL.createObjectURL(articleData.thumbnail)}
+                      alt="Thumbnail preview"
+                      className="h-full object-contain"
+                    />
+                    <button
+                      onClick={handleRemoveThumbnail}
+                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-600"
+                    >
+                      ×
+                    </button>
+                  </>
                 ) : (
                   <div className="text-gray-400">
                     <svg
@@ -457,29 +692,52 @@ export function CreateArticle() {
                   </div>
                 )}
               </div>
-              <button className=" bg-white border border-gray-400 rounded-full h-12 w-65 px-4 py-2 text-gray-700 mb-2 hover:bg-gray-50">
-                Upload thumbnail image
-              </button>
+              <div className="flex flex-col gap-2">
+                <label className="bg-white border border-gray-400 rounded-full h-12 w-65 px-4 py-2 text-gray-700 mb-2 hover:bg-gray-50 cursor-pointer text-center flex items-center justify-center">
+                  {isUploading ? "Uploading..." : "Upload thumbnail image"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleThumbnailUpload}
+                    disabled={isUploading}
+                    className="hidden"
+                  />
+                </label>
+                {articleData.thumbnail && (
+                  <button
+                    onClick={handleRemoveThumbnail}
+                    className="bg-red-500 text-white rounded-full h-12 w-65 px-4 py-2 hover:bg-red-600 text-center"
+                  >
+                    Remove image
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
           <div className="mb-6 w-[480px]">
-            <label htmlFor="category" className="block text-gray-600 mb-2">
+            <label htmlFor="category_id" className="block text-gray-600 mb-2">
               Category
             </label>
             <div className="relative">
               <select
-                id="category"
-                name="category"
-                value={articleData.category}
+                id="category_id"
+                name="category_id"
+                value={articleData.category_id}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-gray-200"
+                disabled={isLoadingCategories}
+                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-gray-200 disabled:opacity-50"
               >
-                <option value="">Select category</option>
-                <option value="Technology">Technology</option>
-                <option value="Business">Business</option>
-                <option value="Health">Health</option>
-                <option value="Science">Science</option>
+                <option value="">
+                  {isLoadingCategories
+                    ? "Loading categories..."
+                    : "Select category"}
+                </option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
               </select>
               <ChevronDown
                 size={18}
@@ -518,19 +776,22 @@ export function CreateArticle() {
           </div>
 
           <div className="mb-6">
-            <label htmlFor="introduction" className="block text-gray-600 mb-2">
+            <label htmlFor="description" className="block text-gray-600 mb-2">
               Introduction (max 120 letters)
             </label>
             <textarea
-              id="introduction"
-              name="introduction"
+              id="description"
+              name="description" 
               placeholder="Introduction"
-              value={articleData.introduction}
+              value={articleData.description}
               onChange={handleInputChange}
               maxLength={120}
               rows={3}
               className="w-full px-4 py-3 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-200"
             />
+            <p className="text-sm text-gray-500 mt-1">
+              {(articleData.description || '').length}/120 characters
+            </p>
           </div>
 
           <div className="mb-6">
@@ -549,6 +810,469 @@ export function CreateArticle() {
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+export function EditArticle() {
+  const { articleId } = useParams();
+  const [articleData, setArticleData] = useState({
+    title: "",
+    category_id: "",
+    authorName: "Pawarit S.",
+    description: "", 
+    content: "",
+    thumbnail: null,
+    image_url: null,
+  });
+
+  const navigate = useNavigate();
+
+  const [showModal, setShowModal] = useState(false);
+  const [deleteArticleId, setDeleteArticleId] = useState(null);
+  const { showSuccess, showError } = useToast();
+
+  const [isUploading, setIsUploading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [categories, setCategories] = useState([]);
+  const [isLoadingCategories, setIsLoadingCategories] = useState(true);
+
+  // Fetch categories on component mount
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        setIsLoadingCategories(true);
+        const response = await axiosInstance.get("/admin/categories");
+        setCategories(response.data);
+        console.log("Fetched categories:", response.data);
+      } catch (error) {
+        console.error("Error fetching categories:", error);
+        alert("Failed to load categories. Please refresh the page.");
+      } finally {
+        setIsLoadingCategories(false);
+      }
+    };
+
+    fetchCategories();
+  }, []);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setArticleData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleThumbnailUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      alert("Please select an image file");
+      return;
+    }
+
+    // Validate file size (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      alert("File size must be less than 5MB");
+      return;
+    }
+
+    setIsUploading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const response = await axiosInstance.post(
+        "/admin/posts/upload-image",
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      setArticleData((prev) => ({
+        ...prev,
+        thumbnail: file,
+        image_url: response.data.image_url,
+      }));
+    } catch (error) {
+      console.error("Upload error:", error);
+      alert("Failed to upload image. Please try again.");
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleRemoveThumbnail = async () => {
+    if (!articleData.image_url) return;
+
+    try {
+      await axiosInstance.delete("/admin/posts/delete-image", {
+        data: {
+          image_url: articleData.image_url,
+        },
+      });
+
+      setArticleData((prev) => ({
+        ...prev,
+        thumbnail: null,
+        image_url: null,
+      }));
+    } catch (error) {
+      console.error("Delete error:", error);
+    }
+  };
+
+  const handleSaveAsDraft = async () => {
+    await handleSubmit(1); // status_id 1 for draft
+  };
+
+  const handleSaveAndPublish = async () => {
+    await handleSubmit(2); // status_id 2 for published
+  };
+
+  const handleSubmit = async (status_id) => {
+    // Validation
+    if (!articleData.title.trim()) {
+      alert("Please enter a title");
+      return;
+    }
+
+    if (!articleData.category_id) {
+      alert("Please select a category");
+      return;
+    }
+
+    if (!articleData.description.trim()) { 
+      alert("Please enter an introduction");
+      return;
+    }
+
+    if (!articleData.content.trim()) {
+      alert("Please enter content");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const payload = {
+        title: articleData.title,
+        image_url: articleData.image_url,
+        category_id: parseInt(articleData.category_id),
+        description: articleData.description,
+        content: articleData.content,
+        status_id: status_id,
+      };
+
+      await axiosInstance.put(`/admin/posts/${articleId}`, payload);
+
+      alert(
+        status_id === 1
+          ? "Article saved as draft!"
+          : "Article published successfully!"
+      );
+
+      // Reset form
+      setArticleData({
+        title: "",
+        category_id: "",
+        authorName: "Pawarit S.",
+        description: "", 
+        content: "",
+        thumbnail: null,
+        image_url: null,
+      });
+
+      // Optionally redirect to articles list
+      window.location.href = "/article-management";
+    } catch (error) {
+      console.error("Submit error:", error);
+      const errorMessage =
+        error.response?.data?.error ||
+        "Failed to create article. Please try again.";
+      alert(errorMessage);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const getArticleData = async (articleId) => {
+    try {
+      const response = await axiosInstance.get(`/admin/posts/${articleId}`);
+      setArticleData((prev) => ({
+        ...prev,
+        ...response.data,
+      }));
+      console.log("Get article data: ", response.data);
+    } catch (error) {
+      console.error("Fetching article data error: ", error);
+    }
+  };
+
+  useEffect(() => {
+    getArticleData(articleId);
+  }, [articleId]);
+  console.log("Set Article: ", articleData);
+
+  const handleDeleteModal = (ArticleId) => {
+    setShowModal(true);
+    setDeleteArticleId(ArticleId);
+  };
+
+  const handleCancel = () => {
+    setShowModal(false);
+    setDeleteArticleId(null);
+  };
+
+  const handleDeleteArticle = async (id) => {
+    try {
+      await axiosInstance.delete(`/admin/posts/${id}`);
+
+      setShowModal(false);
+      showSuccess("Article deleted successfully");
+      setDeleteArticleId(null);
+      navigate("/article-management")
+    } catch (error) {
+      console.error("Error deleting article:", error); 
+      showError(error.response?.data?.message || "Failed to delete article"); 
+    }
+  };
+
+  return (
+    <div className="flex min-h-screen bg-gray-100">
+      <AdminSidebar />
+
+      {/* Main Content */}
+      <div className="flex-1">
+        <header className="bg-white border-b border-gray-200 py-6 px-20 flex flex-row justify-between">
+          <h1 className="text-2xl font-bold text-gray-800 inline-block">
+            Edit article
+          </h1>
+          <div className="flex space-x-4">
+            <button
+              onClick={handleSaveAsDraft}
+              disabled={isSubmitting}
+              className="flex items-center bg-white border border-gray-300 text-gray-700 px-6 py-3 rounded-full shadow-sm hover:bg-gray-500 hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSubmitting ? "Saving..." : "Save as draft"}
+            </button>
+            <button
+              onClick={handleSaveAndPublish}
+              disabled={isSubmitting}
+              className="flex items-center bg-black text-white px-6 py-3 rounded-full shadow-lg hover:bg-gray-700 hover:cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isSubmitting ? "Publishing..." : "Save and publish"}
+            </button>
+          </div>
+        </header>
+
+        <div className="px-20 py-10">
+          <div className="mb-8">
+            <h2 className="text-gray-600 mb-3">Thumbnail image</h2>
+            <div className="flex flex-row gap-6 justify-start w-[780px] items-end">
+              <div className="bg-gray-200 border border-gray-200 rounded-md w-[30rem] h-60 overflow-hidden relative">
+                {articleData.image_url ? (
+                  <>
+                    <img
+                      src={articleData.image_url}
+                      alt="Thumbnail preview"
+                      className="w-full h-full object-cover object-center block"
+                    />
+                    <button
+                      onClick={handleRemoveThumbnail}
+                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-8 h-8 flex items-center justify-center hover:bg-red-600 hover:cursor-pointer"
+                    >
+                      ×
+                    </button>
+                  </>
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-400">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="w-12 h-12 mb-1"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                      strokeWidth={1.5}
+                    >
+                      <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                      <circle cx="8.5" cy="8.5" r="1.5" />
+                      <path d="M21 15l-5-5L5 21" />
+                    </svg>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="bg-white border border-gray-400 rounded-full h-12 w-65 px-4 py-2 text-gray-700 mb-2 hover:bg-gray-50 cursor-pointer text-center flex items-center justify-center">
+                  {isUploading ? "Uploading..." : "Upload thumbnail image"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleThumbnailUpload}
+                    disabled={isUploading}
+                    className="hidden"
+                  />
+                </label>
+                {articleData.thumbnail && (
+                  <button
+                    onClick={handleRemoveThumbnail}
+                    className="bg-red-500 text-white rounded-full h-12 w-65 px-4 py-2 hover:bg-red-600 text-center"
+                  >
+                    Remove image
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-6 w-[480px]">
+            <label htmlFor="category_id" className="block text-gray-600 mb-2">
+              Category
+            </label>
+            <div className="relative">
+              <select
+                id="category_id"
+                name="category_id"
+                value={articleData.category_id}
+                onChange={handleInputChange}
+                disabled={isLoadingCategories}
+                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-md appearance-none focus:outline-none focus:ring-2 focus:ring-gray-200 disabled:opacity-50"
+              >
+                <option value="">
+                  {isLoadingCategories
+                    ? "Loading categories..."
+                    : "Select category"}
+                </option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown
+                size={18}
+                className="absolute right-4 top-3.5 text-gray-500 pointer-events-none"
+              />
+            </div>
+          </div>
+
+          <div className="mb-6 w-[480px]">
+            <label htmlFor="authorName" className="block text-gray-600 mb-2">
+              Author name
+            </label>
+            <input
+              type="text"
+              id="authorName"
+              name="authorName"
+              value={articleData.authorName}
+              className="w-full px-4 py-3 bg-gray-200 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-200"
+              readOnly
+            />
+          </div>
+
+          <div className="mb-6">
+            <label htmlFor="title" className="block text-gray-600 mb-2">
+              Title
+            </label>
+            <input
+              type="text"
+              id="title"
+              name="title"
+              placeholder="Article title"
+              value={articleData.title}
+              onChange={handleInputChange}
+              className="w-full px-4 py-3 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-200"
+            />
+          </div>
+
+          <div className="mb-6">
+            <label htmlFor="description" className="block text-gray-600 mb-2">
+              Introduction (max 120 letters)
+            </label>
+            <textarea
+              id="description"
+              name="description" 
+              placeholder="Introduction"
+              value={articleData.description}
+              onChange={handleInputChange}
+              maxLength={120}
+              rows={3}
+              className="w-full px-4 py-3 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-200"
+            />
+            <p className="text-sm text-gray-500 mt-1">
+              {(articleData.description || '').length}/120 characters
+            </p>
+          </div>
+
+          <div className="mb-6">
+            <label htmlFor="content" className="block text-gray-600 mb-2">
+              Content
+            </label>
+            <textarea
+              id="content"
+              name="content"
+              placeholder="Content"
+              value={articleData.content}
+              onChange={handleInputChange}
+              rows={10}
+              className="w-full px-4 py-3 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gray-200"
+            />
+          </div>
+
+          <button
+            className="flex items-center gap-1 p-1 text-gray-400 hover:text-gray-600"
+            onClick={() => handleDeleteModal(articleId)}
+          >
+            <Trash2 size={18} />
+            <span>Delete Article</span>
+          </button>
+        </div>
+      </div>
+      {/* Delete Post Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-[var(--color-brown-100)] flex flex-col rounded-xl pt-4 pb-10 px-6 shadow-lg w-[480px] text-center">
+            <div className="flex justify-end">
+              <button
+                onClick={handleCancel}
+                className="text-[var(--color-brown-600)] text-2xl hover:text-gray-600 hover:cursor-pointer"
+              >
+                &times;
+              </button>
+            </div>
+            <div className="flex flex-col items-center gap-6">
+              <h3 className="text-2xl font-semibold text-[var(--color-brown-600)]">
+                Delete article
+              </h3>
+              <p className="text-base text-[var(--color-brown-400)] ">
+                Do you want to delete this article?
+              </p>
+              <div className="flex justify-center gap-2">
+                <button
+                  onClick={handleCancel}
+                  className="bg-white border border-[var(-color--brown-400)] text-[var(-color--brown-600)] py-3 px-10 rounded-full hover:bg-gray-100 hover:cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleDeleteArticle(deleteArticleId)}
+                  className="bg-[var(--color-brown-600)] text-white py-3 px-10 rounded-full hover:bg-[var(--color-brown-400)] hover:cursor-pointer"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -274,7 +274,7 @@ function ViewPostPage() {
         {/* View Post Page Header */}
         <div className="title-image markdown w-full sm:max-w-[800px] md:max-w-[1000px] lg:max-w-[1200px] h-auto sm:h-[400px] md:h-[500px] lg:h-[587px] overflow-hidden rounded-xl">
           <img
-            src={postInfo.image}
+            src={postInfo.image_url}
             alt={postInfo.title}
             className="object-cover object-center w-full h-full"
           />

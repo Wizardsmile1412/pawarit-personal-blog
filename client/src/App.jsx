@@ -13,6 +13,7 @@ import { AdminLoginPage } from "./pages/AdminPages/AdminLoginPage";
 import {
   ArticleManagement,
   CreateArticle,
+  EditArticle,
   CategoryManagement,
   CreateCategory,
   EditCategory,
@@ -157,6 +158,14 @@ function App() {
               </AdminProtectedRoute>
             }
           />
+          <Route
+            path="/edit-article/:articleId"
+            element={
+              <AdminProtectedRoute>
+                <EditArticle />
+              </AdminProtectedRoute>
+            }
+          /> 
           <Route
             path="/create-article"
             element={
