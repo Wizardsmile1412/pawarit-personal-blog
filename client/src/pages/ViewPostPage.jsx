@@ -22,12 +22,12 @@ const LoginDialog = ({ isOpen, onClose }) => {
       <div className="bg-white rounded-lg max-w-md w-full p-6 relative shadow-xl">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4"
+          className="absolute top-4 right-4 hover:text-red-500"
           aria-label="Close"
         >
           <svg
-            width="24"
-            height="24"
+            width="20"
+            height="20"
             viewBox="0 0 24 24"
             fill="none"
             xmlns="http://www.w3.org/2000/svg"
@@ -43,7 +43,7 @@ const LoginDialog = ({ isOpen, onClose }) => {
         </button>
 
         <div className="text-center mb-6">
-          <h2 className="text-4xl font-semibold text-[#26231E] mb-4">
+          <h2 className="text-3xl font-semibold text-[#26231E] mb-4">
             Create an account to continue
           </h2>
         </div>
