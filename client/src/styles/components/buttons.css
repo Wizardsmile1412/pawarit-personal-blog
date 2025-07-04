@@ -1,0 +1,71 @@
+/* Since this file is imported with layer(components), all styles here are in components layer */
+
+.btn {
+  box-sizing: border-box;
+  display: inline-flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 12px 40px;
+  gap: 6px;
+  border-radius: 999px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+  user-select: none;
+  font-family: var(--font-family-primary);
+  font-style: normal;
+  font-weight: var(--font-weight-medium);
+  font-size: var(--font-size-body1);
+  line-height: var(--line-height-body1);
+  min-width: 133px;
+  height: 48px;
+}
+
+.btn-primary {
+  background: var(--color-brown-600);
+  color: var(--color-white);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--color-brown-400);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active:not(:disabled) {
+  background: var(--color-brown-500);
+  transform: translateY(0);
+}
+
+.btn-primary:disabled {
+  background: var(--color-brown-300);
+  cursor: not-allowed;
+  transform: translateY(0);
+  opacity: 0.6;
+}
+
+.btn-secondary {
+  background: var(--color-white);
+  color: var(--color-brown-600);
+  border: 1px solid var(--color-brown-400);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  color: var(--color-brown-400);
+  transform: translateY(-1px);
+}
+
+.btn-secondary:active:not(:disabled) {
+  background: var(--color-brown-100);
+  transform: translateY(0);
+}
+
+.btn-secondary:disabled {
+  background: var(--color-brown-100);
+  color: var(--color-brown-200);
+  border-color: var(--color-brown-200);
+  cursor: not-allowed;
+  transform: translateY(0);
+  opacity: 0.6;
+}
