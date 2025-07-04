@@ -25,6 +25,13 @@ export function SignupPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = {};
+    if (!formData.name.trim()) {
+      newErrors.name = "Name is required";
+    }
+    
+    if (!formData.username.trim()) {
+      newErrors.username = "Username is required";
+    }
     if (!/\S+@\S+\.\S+/.test(formData.email)) {
       newErrors.email = "Email must be a valid email";
     }
