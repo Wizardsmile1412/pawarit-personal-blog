@@ -6,25 +6,23 @@ A **full-stack personal blog** web application built with **React**, **Vite**, *
 
 ## 📚 Table of Contents
 
-- [🚀 Demo](#demo)  
-- [✨ Features](#features)  
-- [🛠️ Installation](#installation)  
-- [▶️ Usage](#usage)  
-- [📁 Project Structure](#project-structure)  
-- [🧰 Technologies Used](#technologies-used)  
-- [🤝 Contributing](#contributing)  
-- [📄 License](#license)  
-- [📬 Contact](#contact)
+- [Demo](#demo)  
+- [Features](#features)  
+- [Installation](#installation)  
+- [Usage](#usage)  
+- [Project Structure](#project-structure)  
+- [Technologies Used](#technologies-used)  
+- [Contact](#contact)
 
 ---
 
-## 🚀 Demo
+## Demo
 
 🌐 Live site: [https://pawarit-coffee-blog.vercel.app](https://pawarit-coffee-blog.vercel.app)
 
 ---
 
-## ✨ Features
+## Features
 
 - 🔐 User authentication (register, login, logout)  
 - 🔍 Browse, search, and filter blog articles  
@@ -36,9 +34,9 @@ A **full-stack personal blog** web application built with **React**, **Vite**, *
 
 ---
 
-## 🛠️ Installation
+## Installation
 
-### ⚙️ Prerequisites
+### ⚙️Prerequisites
 
 - 🟢 Node.js (v18+ recommended)  
 - 📦 npm
@@ -66,7 +64,7 @@ npm install
 
 ---
 
-## ▶️ Usage
+## Usage
 
 ### 🧪 Running the Client
 
@@ -90,7 +88,7 @@ The server will run at `http://localhost:4000`.
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 client/
@@ -115,7 +113,7 @@ server/
 
 ---
 
-## 🧰 Technologies Used
+## Technologies Used
 
 - ⚛️ **[React](https://react.dev/)** – JavaScript library for building user interfaces  
 - ⚡ **[Vite](https://vitejs.dev/)** – Fast frontend build tool  
@@ -128,7 +126,7 @@ server/
 
 ---
 
-## 📬 Contact
+## Contact
 
 Created by [Pawarit S.](p.sripayom@gmail.com)
 
